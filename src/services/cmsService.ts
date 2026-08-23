@@ -5,10 +5,13 @@ import { initialPortfolioData } from '../data/defaultPortfolioData';
 const STORAGE_KEY = 'DYNAMIC_PORTFOLIO_DATA_V1';
 
 // Vercel Environment Variables থেকে Supabase কানেক্ট করা হচ্ছে
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder'
+);
 
 export class CmsService {
   // ১. ডাটা লোড করার মেথড (সুরক্ষিত ক্লাউড সিঙ্ক সহ)
@@ -29,6 +32,8 @@ export class CmsService {
             seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
             siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
             cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
+            projects: Array.isArray(parsed.projects) ? parsed.projects : initialPortfolioData.projects,
+            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : initialPortfolioData.blogs,
           };
         } catch (e) {
           console.error('Failed to parse portfolio data from storage:', e);
@@ -55,11 +60,13 @@ export class CmsService {
       window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: updated }));
 
       // Supabase ক্লাউড ডাটাবেজে সম্পূর্ণ পোর্টফোলিও ডাটা পাঠানো হচ্ছে
-      const { error } = await supabase
-        .from('portfolio_configs')
-        .upsert({ id: 1, content: updated });
+      if (supabaseUrl && supabaseAnonKey) {
+        const { error } = await supabase
+          .from('portfolio_configs')
+          .upsert({ id: 1, content: updated });
 
-      if (error) console.error('Supabase save error:', error.message);
+        if (error) console.error('Supabase save error:', error.message);
+      }
     } catch (err) {
       console.error('Failed to save portfolio data to storage:', err);
     }
@@ -69,6 +76,7 @@ export class CmsService {
   private static async syncFromSupabase() {
     if (typeof window === 'undefined') return;
     try {
+      if (!supabaseUrl || !supabaseAnonKey) return;
       const { data, error } = await supabase
         .from('portfolio_configs')
         .select('content')
@@ -111,6 +119,42 @@ export class CmsService {
       return { success: true, data: parsed };
     } catch (err: any) {
       return { success: false, error: err.message || 'Invalid JSON format' };
+    }
+  }
+
+  /**
+   * Helper method for Sanity testing if configured
+   */
+  public static async fetchFromSanity(projectId: string, dataset: string = 'production'): Promise<{ success: boolean; data?: Partial<PortfolioData>; error?: string }> {
+    try {
+      const groqQuery = encodeURIComponent(`{
+        "personal": *[_type == "personalInfo"][0],
+        "about": *[_type == "aboutMe"][0],
+        "experiences": *[_type == "experience"] | order(startDate desc),
+        "education": *[_type == "education"] | order(startYear desc),
+        "certificates": *[_type == "certificate"] | order(issueDate desc),
+        "skills": *[_type == "skill"] | order(level desc),
+        "gallery": *[_type == "galleryItem"] | order(_createdAt desc),
+        "contact": *[_type == "contactInfo"][0],
+        "socials": *[_type == "socialLink"] | order(_createdAt asc),
+        "seo": *[_type == "seoSettings"][0],
+        "siteSettings": *[_type == "siteSettings"][0]
+      }`);
+
+      const url = `https://${projectId}.api.sanity.io/v2023-08-01/data/query/${dataset}?query=${groqQuery}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Sanity API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.result) {
+        return { success: true, data: result.result };
+      }
+      return { success: false, error: 'No data returned from Sanity query.' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to connect to Sanity.io' };
     }
   }
 }

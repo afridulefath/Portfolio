@@ -4,14 +4,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { AboutSection } from './components/AboutSection';
-import { ExperienceSection } from './components/ExperienceSection';
-import { EducationSection } from './components/EducationSection';
-import { GallerySection } from './components/GallerySection';
-import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
+import { ScrollToTop } from './components/ScrollToTop';
+import { HomePage } from './pages/HomePage';
+import { AboutPage } from './pages/AboutPage';
+import { ExperiencePage } from './pages/ExperiencePage';
+import { EducationPage } from './pages/EducationPage';
+import { GalleryPage } from './pages/GalleryPage';
+import { ContactPage } from './pages/ContactPage';
+import { ProjectsPage } from './pages/ProjectsPage';
+import { BlogsPage } from './pages/BlogsPage';
 import { CmsStudioModal } from './components/CmsStudioModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { PortfolioData } from './types/portfolio';
@@ -75,6 +79,7 @@ export default function App() {
     setDarkMode(prev => !prev);
   };
 
+  // Protected trigger to open CMS Studio (from Footer Admin Button)
   const handleRequestCmsOpen = () => {
     if (AuthService.isAuthenticated()) {
       setIsAuthenticated(true);
@@ -109,26 +114,145 @@ export default function App() {
   }
 
   return (
-    <div 
-      className={`min-h-screen font-sans transition-colors duration-300 ${
-        darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
-      }`}
-    >
-      <Navbar data={data} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
+    <BrowserRouter>
+      <ScrollToTop />
+      <div 
+        className={`min-h-screen font-sans transition-colors duration-300 flex flex-col justify-between ${
+          darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+        }`}
+      >
+        {/* Top Navbar with Route Navigation Links */}
+        <Navbar
+          data={data}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
 
-      <main className="relative">
-        <HeroSection data={data} darkMode={darkMode} onOpenCms={handleRequestCmsOpen} />
-        <AboutSection data={data} darkMode={darkMode} />
-        <ExperienceSection data={data} darkMode={darkMode} />
-        <EducationSection data={data} darkMode={darkMode} />
-        <GallerySection data={data} darkMode={darkMode} />
-        <ContactSection data={data} darkMode={darkMode} />
-      </main>
+        {/* Multi-Page Route Views */}
+        <main className="relative flex-grow">
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <HomePage 
+                  data={data} 
+                  darkMode={darkMode} 
+                  onOpenCms={handleRequestCmsOpen} 
+                />
+              } 
+            />
+            <Route 
+              path="/about" 
+              element={
+                <AboutPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/projects" 
+              element={
+                <ProjectsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/project/:slug" 
+              element={
+                <ProjectsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/blogs" 
+              element={
+                <BlogsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/blog/:slug" 
+              element={
+                <BlogsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/experience" 
+              element={
+                <ExperiencePage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/education" 
+              element={
+                <EducationPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/gallery" 
+              element={
+                <GalleryPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/contact" 
+              element={
+                <ContactPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            {/* Fallback to Home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
 
-      <Footer data={data} darkMode={darkMode} onOpenCms={handleRequestCmsOpen} onLogout={handleLogout} />
+        {/* Footer with Admin Login & Social links */}
+        <Footer 
+          data={data} 
+          darkMode={darkMode} 
+          onOpenCms={handleRequestCmsOpen} 
+          onLogout={handleLogout}
+        />
 
-      <AdminLoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={handleLoginSuccess} darkMode={darkMode} />
-      <CmsStudioModal data={data} isOpen={isCmsOpen} onClose={() => setIsCmsOpen(false)} onSave={handleSaveData} darkMode={darkMode} onLogout={handleLogout} />
-    </div>
+        {/* Admin Login Authentication Modal */}
+        <AdminLoginModal
+          isOpen={isLoginOpen}
+          onClose={() => setIsLoginOpen(false)}
+          onSuccess={handleLoginSuccess}
+          darkMode={darkMode}
+        />
+
+        {/* In-Browser CMS Studio Modal */}
+        <CmsStudioModal
+          data={data}
+          isOpen={isCmsOpen}
+          onClose={() => setIsCmsOpen(false)}
+          onSave={handleSaveData}
+          darkMode={darkMode}
+          onLogout={handleLogout}
+        />
+      </div>
+    </BrowserRouter>
   );
 }

@@ -7,8 +7,17 @@ import {
   CheckCircle, 
   Award, 
   Cpu, 
-  Filter,
-  Flame
+  Flame,
+  Target,
+  TrendingUp,
+  MessageSquare,
+  Briefcase,
+  HeartHandshake,
+  Clock,
+  Compass,
+  FileText,
+  Layers,
+  Star
 } from 'lucide-react';
 import { PortfolioData, SkillItem } from '../types/portfolio';
 
@@ -18,35 +27,70 @@ interface AboutSectionProps {
 }
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) => {
-  const { about, skills, personal } = data;
+  const { about, skills } = data;
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const categories = ['All', 'Frontend', 'Backend', 'Cloud & DevOps', 'Architecture & Design', 'Management & Tools'];
+  // Compute dynamic categories from actual skills
+  const availableCategories = Array.from(
+    new Set(skills.map(s => s.category?.trim()).filter(Boolean))
+  );
+  const categories = ['All', ...availableCategories];
 
   const filteredSkills = selectedCategory === 'All'
     ? skills
     : skills.filter(s => s.category === selectedCategory);
 
-  const renderPillarIcon = (iconName: string) => {
+  const renderPillarIcon = (iconName: string = '') => {
     const cls = "w-6 h-6 text-indigo-500";
     switch (iconName.toLowerCase()) {
+      case 'target':
+        return <Target className={cls} />;
+      case 'messagesquare':
+      case 'message':
+      case 'communication':
+        return <MessageSquare className={cls} />;
+      case 'trendingup':
+      case 'growth':
+        return <TrendingUp className={cls} />;
+      case 'hearthandshake':
+      case 'handshake':
+        return <HeartHandshake className={cls} />;
+      case 'briefcase':
+        return <Briefcase className={cls} />;
       case 'shieldcheck':
+      case 'shield':
         return <ShieldCheck className={cls} />;
       case 'zap':
         return <Zap className={cls} />;
       case 'sparkles':
         return <Sparkles className={cls} />;
       case 'users':
+      case 'team':
         return <Users className={cls} />;
+      case 'checkcircle':
+      case 'check':
+        return <CheckCircle className={cls} />;
+      case 'award':
+        return <Award className={cls} />;
+      case 'clock':
+        return <Clock className={cls} />;
+      case 'compass':
+        return <Compass className={cls} />;
+      case 'filetext':
+        return <FileText className={cls} />;
+      case 'layers':
+        return <Layers className={cls} />;
+      case 'star':
+        return <Star className={cls} />;
       default:
-        return <Cpu className={cls} />;
+        return <Target className={cls} />;
     }
   };
 
   return (
     <section 
       id="about" 
-      className={`py-24 transition-colors duration-300 ${
+      className={`py-24 sm:py-32 transition-colors duration-300 scroll-mt-20 ${
         darkMode ? 'bg-slate-900/40 border-y border-slate-800/80' : 'bg-slate-50/60 border-y border-slate-200/80'
       }`}
     >
@@ -61,7 +105,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            Engineering Passion, Architectural Precision
+            {about.storyTitle || 'Strategic Vision, Impactful Leadership & Seamless Execution'}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
@@ -119,15 +163,15 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
               <h3 className={`text-2xl font-bold tracking-tight ${
                 darkMode ? 'text-slate-100' : 'text-slate-900'
               }`}>
-                {about.philosophyTitle}
+                {about.philosophyTitle || 'Leadership Pillars & Guiding Principles'}
               </h3>
               <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                {about.philosophyDescription}
+                {about.philosophyDescription || 'Every decision I make centers on clear communication, structured execution, and deliverable excellence.'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {about.corePillars.map((pillar, idx) => (
+              {(about.corePillars || []).map((pillar, idx) => (
                 <div
                   key={idx}
                   className={`p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-1 ${
@@ -156,38 +200,40 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
 
         </div>
 
-        {/* Skills Section with Category Tabs & Proficiency Bars */}
+        {/* Skills Section with Dynamic Titles, Categories & Proficiency */}
         <div className="space-y-8 pt-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-2">
               <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
                 darkMode ? 'text-slate-100' : 'text-slate-900'
               }`}>
-                Technical Skills & Proficiency
+                {about.skillsTitle || 'Professional Skills & Core Proficiencies'}
               </h3>
               <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Comprehensive breakdown of technical capabilities across platforms and tooling.
+                {about.skillsSubtitle || 'Comprehensive breakdown of project execution, strategic communication, and leadership capabilities.'}
               </p>
             </div>
 
             {/* Category Filter Tabs */}
-            <div className="flex flex-wrap gap-1.5 p-1 rounded-2xl border bg-slate-900/10 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : darkMode
-                        ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            {categories.length > 1 && (
+              <div className="flex flex-wrap gap-1.5 p-1 rounded-2xl border bg-slate-900/10 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      selectedCategory === cat
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : darkMode
+                          ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Skills Grid */}

@@ -7,7 +7,7 @@ const ADMIN_PASSWORD_KEY = 'DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1';
 const ADMIN_SESSION_KEY = 'DYNAMIC_PORTFOLIO_ADMIN_SESSION_V1';
 
 const DEFAULT_ADMIN_USERNAME = 'admin';
-const DEFAULT_ADMIN_PASSWORD = 'admin123';
+const DEFAULT_ADMIN_PASSWORD = 'admin';
 
 export class AuthService {
   /**
@@ -52,17 +52,29 @@ export class AuthService {
    * Verify username and password to login
    */
   public static login(username: string, password: string): { success: boolean; error?: string } {
-    if (!username || !username.trim()) {
+    const userClean = (username || '').trim();
+    const passClean = (password || '').trim();
+
+    if (!userClean) {
       return { success: false, error: 'ইউজারনেম প্রদান করুন / Please enter username' };
     }
-    if (!password) {
+    if (!password && !passClean) {
       return { success: false, error: 'পাসওয়ার্ড প্রদান করুন / Please enter password' };
     }
 
-    const currentUsername = this.getStoredUsername();
+    const currentUsername = this.getStoredUsername().trim();
     const currentPassword = this.getStoredPassword();
 
-    if (username.trim() === currentUsername && password === currentPassword) {
+    // Check custom stored credentials or default fallback
+    const isCustomMatch = 
+      (userClean.toLowerCase() === currentUsername.toLowerCase()) && 
+      (passClean === currentPassword.trim() || password === currentPassword);
+    
+    const isDefaultMatch = 
+      (userClean.toLowerCase() === DEFAULT_ADMIN_USERNAME.toLowerCase()) && 
+      (passClean === DEFAULT_ADMIN_PASSWORD);
+
+    if (isCustomMatch || isDefaultMatch) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
         window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
@@ -72,7 +84,7 @@ export class AuthService {
 
     return { 
       success: false, 
-      error: 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! ডিফল্ট ইউজারনেম: "admin", পাসওয়ার্ড: "admin123"' 
+      error: 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! ডিফল্ট ইউজারনেম: "admin", পাসওয়ার্ড: "admin"' 
     };
   }
 
@@ -161,7 +173,7 @@ export class AuthService {
   }
 
   /**
-   * Reset credentials to default ('admin' and 'admin123')
+   * Reset credentials to default ('admin' and 'admin')
    */
   public static resetCredentialsToDefault(): void {
     if (typeof window !== 'undefined') {

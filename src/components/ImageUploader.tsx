@@ -8,10 +8,16 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
-  FileImage
+  FileImage,
+  Layers,
+  FolderOpen
 } from 'lucide-react';
+import { PortfolioData } from '../types/portfolio';
+import { MediaPickerModal } from './media/MediaPickerModal';
+import { CmsService } from '../services/cmsService';
 
 interface ImageUploaderProps {
+  id?: string;
   value: string;
   onChange: (url: string) => void;
   label?: string;
@@ -19,23 +25,30 @@ interface ImageUploaderProps {
   darkMode?: boolean;
   aspectRatio?: 'square' | 'banner' | 'auto';
   previewHeight?: string;
+  placeholder?: string;
+  portfolioData?: PortfolioData;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
+  id,
   value,
   onChange,
   label = 'ছবি আপলোড / Image Upload',
   sublabel = 'ডিভাইস থেকে সরাসরি ফাইল আপলোড করুন অথবা লিংক দিন',
   darkMode = true,
   aspectRatio = 'auto',
-  previewHeight = 'h-32'
+  previewHeight = 'h-32',
+  portfolioData,
 }) => {
   const [mode, setMode] = useState<'device' | 'url'>('device');
   const [urlInput, setUrlInput] = useState<string>(value && !value.startsWith('data:') ? value : '');
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activePortfolioData = portfolioData || CmsService.getData();
 
   // Helper to compress / resize large device images using HTML Canvas before base64 saving
   const processImageFile = (file: File) => {
@@ -158,31 +171,43 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1 p-0.5 rounded-lg border border-slate-700 bg-slate-900/60">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
           <button
             type="button"
-            onClick={() => setMode('device')}
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-              mode === 'device'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            onClick={() => setPickerOpen(true)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition-all cursor-pointer shadow-xs"
+            title="মিডিয়া লাইব্রেরি থেকে ছবি নির্বাচন করুন"
           >
-            <Upload className="w-3 h-3" />
-            <span>ডিভাইস ফাইল</span>
+            <FolderOpen className="w-3 h-3 text-indigo-400" />
+            <span>মিডিয়া লাইব্রেরি</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setMode('url')}
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-              mode === 'url'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <LinkIcon className="w-3 h-3" />
-            <span>ওয়েব লিংক</span>
-          </button>
+
+          <div className="flex items-center gap-1 p-0.5 rounded-lg border border-slate-700 bg-slate-900/60">
+            <button
+              type="button"
+              onClick={() => setMode('device')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                mode === 'device'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Upload className="w-3 h-3" />
+              <span>ডিভাইস</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('url')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                mode === 'url'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <LinkIcon className="w-3 h-3" />
+              <span>লিংক</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -317,6 +342,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(selectedUrl) => {
+          onChange(selectedUrl);
+          setUrlInput(selectedUrl);
+        }}
+        portfolioData={activePortfolioData}
+        darkMode={darkMode}
+        title={`Select Image for ${label}`}
+      />
     </div>
   );
 };

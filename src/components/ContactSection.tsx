@@ -144,7 +144,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ data, darkMode }
   return (
     <section 
       id="contact" 
-      className={`py-24 transition-colors duration-300 ${
+      className={`py-24 sm:py-32 transition-colors duration-300 scroll-mt-20 ${
         darkMode ? 'bg-slate-900/40 border-t border-slate-800/80' : 'bg-slate-50/60 border-t border-slate-200/80'
       }`}
     >
