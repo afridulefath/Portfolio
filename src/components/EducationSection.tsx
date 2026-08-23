@@ -22,7 +22,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMo
   return (
     <section 
       id="education" 
-      className={`py-24 transition-colors duration-300 ${
+      className={`py-24 sm:py-32 transition-colors duration-300 scroll-mt-20 ${
         darkMode ? 'bg-slate-900/40 border-y border-slate-800/80' : 'bg-slate-50/60 border-y border-slate-200/80'
       }`}
     >

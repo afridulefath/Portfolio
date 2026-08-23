@@ -27,7 +27,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
   };
 
   return (
-    <section id="experience" className="py-24 relative overflow-hidden">
+    <section id="experience" className="py-24 sm:py-32 relative overflow-hidden scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         
         {/* Header */}
