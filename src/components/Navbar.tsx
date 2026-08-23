@@ -24,13 +24,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [logoError, setLogoError] = useState(false);
   const location = useLocation();
 
+  const customLabels = data.siteSettings.navCustomLabels || {};
+
   const navLinks = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about' },
-    { label: 'Experience', path: '/experience' },
-    { label: 'Education', path: '/education' },
-    { label: 'Gallery', path: '/gallery' },
-    { label: 'Contact', path: '/contact' },
+    { key: 'home', label: customLabels['home'] || 'Home', path: '/' },
+    { key: 'about', label: customLabels['about'] || 'About', path: '/about' },
+    { key: 'projects', label: customLabels['projects'] || 'Projects', path: '/projects' },
+    { key: 'blogs', label: customLabels['blogs'] || customLabels['blog'] || 'Blog', path: '/blogs' },
+    { key: 'experience', label: customLabels['experience'] || 'Experience', path: '/experience' },
+    { key: 'education', label: customLabels['education'] || 'Education', path: '/education' },
+    { key: 'gallery', label: customLabels['gallery'] || 'Gallery', path: '/gallery' },
+    { key: 'contact', label: customLabels['contact'] || 'Contact', path: '/contact' },
   ];
 
   const brandName = data.siteSettings.brandName || data.personal.fullName || 'Portfolio';

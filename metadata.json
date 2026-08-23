@@ -1,6 +1,6 @@
 {
   "name": "Dynamic Portfolio & CMS",
-  "description": "A production-grade dynamic portfolio with live CMS content management, dark mode, experience timeline, lightbox gallery, and email integration.",
+  "description": "A production-grade dynamic portfolio with live CMS content management, professional media library with folders and SEO metadata, visitor analytics, customizable navbar labels, dark mode, and multi-page routing.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

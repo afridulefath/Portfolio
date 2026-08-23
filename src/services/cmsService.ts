@@ -32,6 +32,8 @@ export class CmsService {
             seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
             siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
             cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
+            projects: Array.isArray(parsed.projects) ? parsed.projects : initialPortfolioData.projects,
+            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : initialPortfolioData.blogs,
           };
         } catch (e) {
           console.error('Failed to parse portfolio data from storage:', e);

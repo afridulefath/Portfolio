@@ -64,9 +64,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   };
 
   const handleUseDefaultCredentials = () => {
+    AuthService.resetCredentialsToDefault();
     setUsername('admin');
-    setPassword('admin123');
+    setPassword('admin');
     setError(null);
+  };
+
+  const handleInstantResetAndLogin = () => {
+    AuthService.resetCredentialsToDefault();
+    setUsername('admin');
+    setPassword('admin');
+    setError(null);
+    onSuccess();
   };
 
   return (
@@ -165,11 +174,23 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
           </div>
 
-          {/* Error feedback */}
+          {/* Error feedback with Recovery Action */}
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs animate-fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs space-y-2 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+              <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
+                <span className="text-[11px] text-slate-300">লগইন করতে সমস্যা হচ্ছে?</span>
+                <button
+                  type="button"
+                  onClick={handleInstantResetAndLogin}
+                  className="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-white font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  ⚡ সরাসরি আনলক ও রিসেট করুন
+                </button>
+              </div>
             </div>
           )}
 
@@ -179,7 +200,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           }`}>
             <div className="space-y-0.5">
               <p className="font-semibold text-indigo-400">
-                ইউজার: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin</code> | পাস: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin123</code>
+                ইউজার: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin</code> | পাস: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin</code>
               </p>
               <p className="text-[11px] text-slate-400">ড্যাশবোর্ড খোলার পর সিকিউরিটি ট্যাব থেকে দুটোই বদলাতে পারবেন।</p>
             </div>

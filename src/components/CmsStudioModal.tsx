@@ -26,7 +26,22 @@ import {
   Lock,
   LogOut,
   Inbox,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Target,
+  TrendingUp,
+  MessageSquare,
+  Users,
+  HeartHandshake,
+  Award,
+  Zap,
+  Clock,
+  Compass,
+  Layers,
+  Star,
+  Flame,
+  BarChart3,
+  BookOpen,
+  FolderOpen
 } from 'lucide-react';
 import { 
   PortfolioData, 
@@ -35,7 +50,9 @@ import {
   CertificateItem, 
   SkillItem, 
   GalleryItem, 
-  SocialLink 
+  SocialLink,
+  BlogPost,
+  ProjectItem 
 } from '../types/portfolio';
 import { CmsService } from '../services/cmsService';
 import { AuthService } from '../services/authService';
@@ -44,6 +61,10 @@ import { ImageUploader } from './ImageUploader';
 import { ResumeUploader } from './ResumeUploader';
 import { SocialIcon } from './SocialIcon';
 import { MessagesInboxTab } from './MessagesInboxTab';
+import { AnalyticsDashboardTab } from './AnalyticsDashboardTab';
+import { AdminProjectsTab } from './AdminProjectsTab';
+import { AdminBlogsTab } from './AdminBlogsTab';
+import { MediaLibraryTab } from './media/MediaLibraryTab';
 
 interface CmsStudioModalProps {
   data: PortfolioData;
@@ -220,6 +241,10 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
   };
 
   const tabs = [
+    { id: 'media', label: '📁 Media Library & Assets', icon: FolderOpen },
+    { id: 'analytics', label: '📊 Visitor Analytics & Traffic', icon: BarChart3 },
+    { id: 'projects', label: '🚀 Projects & Case Studies', icon: Briefcase },
+    { id: 'blogs', label: '✍️ Blog & Articles', icon: BookOpen },
     { id: 'personal', label: '1. Personal Info', icon: User },
     { id: 'about', label: '2. About Me', icon: FileText },
     { id: 'experience', label: '3. Experience', icon: Briefcase },
@@ -229,7 +254,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
     { id: 'contact', label: '7. Contact Info', icon: Mail },
     { id: 'socials', label: '8. Social Links', icon: Share2 },
     { id: 'seo', label: '9. SEO Metadata', icon: Globe },
-    { id: 'settings', label: '10. Site Settings & Logo', icon: Sliders },
+    { id: 'settings', label: '10. Site Settings & Navbar', icon: Sliders },
     { id: 'security', label: '11. Security & Credentials', icon: KeyRound },
     { id: 'messages', label: '12. Messages Inbox', icon: Inbox },
   ];
@@ -635,23 +660,41 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {activeTab === 'about' && (
               <div className="space-y-6 max-w-3xl">
                 <div>
-                  <h3 className="text-xl font-bold">About Me & Guiding Philosophy</h3>
-                  <p className="text-xs text-slate-400">Manage your detailed biographical narrative, career highlights, and core pillars.</p>
+                  <h3 className="text-xl font-bold">About & Guiding Philosophy</h3>
+                  <p className="text-xs text-slate-400">Manage your detailed biographical narrative, career highlights, and core guiding pillars.</p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Summary Hook / Story Subtitle</label>
-                  <input
-                    type="text"
-                    value={formData.about.storySummary}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      about: { ...formData.about, storySummary: e.target.value }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Section Main Heading</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Strategic Vision, Impactful Leadership & Seamless Execution"
+                      value={formData.about.storyTitle || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        about: { ...formData.about, storyTitle: e.target.value }
+                      })}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Summary Hook / Story Subtitle</label>
+                    <input
+                      type="text"
+                      placeholder="Brief tagline or vision statement"
+                      value={formData.about.storySummary}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        about: { ...formData.about, storySummary: e.target.value }
+                      })}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -669,34 +712,156 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Philosophy Title</label>
-                    <input
-                      type="text"
-                      value={formData.about.philosophyTitle}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        about: { ...formData.about, philosophyTitle: e.target.value }
-                      })}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    />
+                {/* Core Pillars & Guiding Principles Section */}
+                <div className={`p-5 rounded-2xl border space-y-4 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold flex items-center gap-2 text-indigo-400">
+                        <Target className="w-4 h-4" />
+                        <span>Core Pillars & Guiding Principles</span>
+                      </h4>
+                      <p className="text-xs text-slate-400">Customize the pillar cards displayed on your About profile.</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPillar = {
+                          title: 'New Leadership Pillar',
+                          description: 'Key principle or approach driving successful project outcomes.',
+                          icon: 'Target',
+                        };
+                        setFormData({
+                          ...formData,
+                          about: {
+                            ...formData.about,
+                            corePillars: [...(formData.about.corePillars || []), newPillar],
+                          },
+                        });
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Pillar</span>
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Philosophy Description</label>
-                    <input
-                      type="text"
-                      value={formData.about.philosophyDescription}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        about: { ...formData.about, philosophyDescription: e.target.value }
-                      })}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Pillars Section Title</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Leadership Pillars & Guiding Principles"
+                        value={formData.about.philosophyTitle}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          about: { ...formData.about, philosophyTitle: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Pillars Tagline / Description</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Every decision I make centers on clear communication..."
+                        value={formData.about.philosophyDescription}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          about: { ...formData.about, philosophyDescription: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pillar Cards List */}
+                  <div className="space-y-3 pt-2">
+                    {(formData.about.corePillars || []).map((pillar, pIdx) => (
+                      <div
+                        key={pIdx}
+                        className={`p-4 rounded-xl border space-y-3 ${
+                          darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex-1 w-full flex items-center gap-2">
+                            <input
+                              type="text"
+                              placeholder="Pillar Title (e.g. Project Ownership)"
+                              value={pillar.title}
+                              onChange={(e) => {
+                                const updated = [...(formData.about.corePillars || [])];
+                                updated[pIdx] = { ...updated[pIdx], title: e.target.value };
+                                setFormData({ ...formData, about: { ...formData.about, corePillars: updated } });
+                              }}
+                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold border outline-none ${
+                                darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                              }`}
+                            />
+
+                            <select
+                              value={pillar.icon || 'Target'}
+                              onChange={(e) => {
+                                const updated = [...(formData.about.corePillars || [])];
+                                updated[pIdx] = { ...updated[pIdx], icon: e.target.value };
+                                setFormData({ ...formData, about: { ...formData.about, corePillars: updated } });
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs border font-medium ${
+                                darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                              }`}
+                            >
+                              <option value="Target">🎯 Target (Goals / Delivery)</option>
+                              <option value="MessageSquare">💬 MessageSquare (Communication)</option>
+                              <option value="Users">👥 Users (Team & Leadership)</option>
+                              <option value="TrendingUp">📈 TrendingUp (Strategy & Growth)</option>
+                              <option value="HeartHandshake">🤝 HeartHandshake (Partnership)</option>
+                              <option value="Briefcase">💼 Briefcase (Management)</option>
+                              <option value="ShieldCheck">🛡️ ShieldCheck (Quality & Integrity)</option>
+                              <option value="Zap">⚡ Zap (Speed & Efficiency)</option>
+                              <option value="Sparkles">✨ Sparkles (Excellence)</option>
+                              <option value="Award">🏆 Award (Achievement)</option>
+                              <option value="Clock">⏱️ Clock (Time Management)</option>
+                              <option value="Compass">🧭 Compass (Direction & Vision)</option>
+                              <option value="Layers">📑 Layers (Operations & Structure)</option>
+                              <option value="Star">⭐ Star (Distinction)</option>
+                            </select>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (formData.about.corePillars || []).filter((_, i) => i !== pIdx);
+                              setFormData({ ...formData, about: { ...formData.about, corePillars: updated } });
+                            }}
+                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors"
+                            title="Remove Pillar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <textarea
+                          rows={2}
+                          placeholder="Describe this pillar's philosophy and practical impact..."
+                          value={pillar.description}
+                          onChange={(e) => {
+                            const updated = [...(formData.about.corePillars || [])];
+                            updated[pIdx] = { ...updated[pIdx], description: e.target.value };
+                            setFormData({ ...formData, about: { ...formData.about, corePillars: updated } });
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg text-xs border outline-none ${
+                            darkMode ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-700'
+                          }`}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -707,6 +872,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       Career Key Highlights
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         const updated = [...(formData.about.highlights || []), 'New major career highlight or milestone'];
                         setFormData({ ...formData, about: { ...formData.about, highlights: updated } });
@@ -733,6 +899,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         }`}
                       />
                       <button
+                        type="button"
                         onClick={() => {
                           const updated = formData.about.highlights.filter((_, i) => i !== idx);
                           setFormData({ ...formData, about: { ...formData.about, highlights: updated } });
@@ -1198,17 +1365,18 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {/* 5. SKILLS TAB */}
             {activeTab === 'skills' && (
               <div className="space-y-6 max-w-3xl">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-xl font-bold">Skills Matrix</h3>
-                    <p className="text-xs text-slate-400">Set proficiency percentages (1-100%) and skill categories.</p>
+                    <h3 className="text-xl font-bold">Skills & Core Competencies Matrix</h3>
+                    <p className="text-xs text-slate-400">Add, categorize, and adjust proficiency for any skill (Project Handling, Communication, Leadership, etc.).</p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       const newSkill: SkillItem = {
-                        name: 'New Skill',
+                        name: 'Project Coordination & Delivery',
                         level: 90,
-                        category: 'Frontend',
+                        category: 'Project Management',
                         featured: true,
                       };
                       setFormData({
@@ -1216,53 +1384,181 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         skills: [...formData.skills, newSkill],
                       });
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors shadow-sm w-fit"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Skill</span>
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Skill</span>
                   </button>
                 </div>
 
+                {/* Dynamic Skills Section Heading & Subtitle */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                    Skills Section Display Settings
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Section Title</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Professional Skills & Core Proficiencies"
+                        value={formData.about.skillsTitle || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          about: { ...formData.about, skillsTitle: e.target.value }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Section Subtitle / Description</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Breakdown of project handling, communication & leadership capabilities"
+                        value={formData.about.skillsSubtitle || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          about: { ...formData.about, skillsSubtitle: e.target.value }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Preset Quick Helpers */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Suggested Category Presets (or type your own):</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Project Management', 'Communication & Leadership', 'Operations & Strategy', 'Tools & Platforms', 'Client Relations', 'Strategic Planning'].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          const newSkill: SkillItem = {
+                            name: `New ${preset} Skill`,
+                            level: 88,
+                            category: preset,
+                            featured: false,
+                          };
+                          setFormData({
+                            ...formData,
+                            skills: [...formData.skills, newSkill],
+                          });
+                        }}
+                        className={`text-[11px] px-2.5 py-1 rounded-lg border font-medium transition-all ${
+                          darkMode 
+                            ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-indigo-500 hover:text-white' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-600'
+                        }`}
+                      >
+                        + {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Datalist for category autocomplete */}
+                <datalist id="skill-category-presets">
+                  <option value="Project Management" />
+                  <option value="Communication & Leadership" />
+                  <option value="Operations & Strategy" />
+                  <option value="Tools & Platforms" />
+                  <option value="Strategic Planning" />
+                  <option value="Client Relations" />
+                  <option value="Quality & Compliance" />
+                  <option value="Management & Analytics" />
+                </datalist>
+
+                {/* Skills List */}
                 <div className="space-y-3">
                   {formData.skills.map((skill, idx) => (
                     <div 
                       key={idx} 
-                      className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center gap-3 ${
-                        darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      className={`p-3.5 rounded-2xl border flex flex-col gap-3 transition-all ${
+                        darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
                       }`}
                     >
-                      <input
-                        type="text"
-                        value={skill.name}
-                        onChange={(e) => {
-                          const updated = [...formData.skills];
-                          updated[idx].name = e.target.value;
-                          setFormData({ ...formData, skills: updated });
-                        }}
-                        className={`w-full sm:w-48 px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-                          darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                        }`}
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                        <div className="sm:col-span-6">
+                          <input
+                            type="text"
+                            placeholder="Skill Name (e.g. Project Handling, Stakeholder Communication)"
+                            value={skill.name}
+                            onChange={(e) => {
+                              const updated = [...formData.skills];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setFormData({ ...formData, skills: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
 
-                      <select
-                        value={skill.category}
-                        onChange={(e: any) => {
-                          const updated = [...formData.skills];
-                          updated[idx].category = e.target.value;
-                          setFormData({ ...formData, skills: updated });
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs border ${
-                          darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                        }`}
-                      >
-                        <option value="Frontend">Frontend</option>
-                        <option value="Backend">Backend</option>
-                        <option value="Cloud & DevOps">Cloud & DevOps</option>
-                        <option value="Architecture & Design">Architecture & Design</option>
-                        <option value="Management & Tools">Management & Tools</option>
-                      </select>
+                        <div className="sm:col-span-4">
+                          <input
+                            type="text"
+                            list="skill-category-presets"
+                            placeholder="Category (e.g. Project Management)"
+                            value={skill.category}
+                            onChange={(e) => {
+                              const updated = [...formData.skills];
+                              updated[idx] = { ...updated[idx], category: e.target.value };
+                              setFormData({ ...formData, skills: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
 
-                      <div className="flex items-center gap-2 flex-1 w-full">
+                        <div className="sm:col-span-2 flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...formData.skills];
+                              updated[idx] = { ...updated[idx], featured: !updated[idx].featured };
+                              setFormData({ ...formData, skills: updated });
+                            }}
+                            className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 border transition-colors ${
+                              skill.featured
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                                : darkMode
+                                  ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                                  : 'bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-700'
+                            }`}
+                            title={skill.featured ? 'Featured on Home/Core Badge' : 'Mark as Core Skill'}
+                          >
+                            <Flame className="w-3 h-3" />
+                            <span>{skill.featured ? 'Core' : 'Norm'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = formData.skills.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, skills: updated });
+                            }}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded-lg cursor-pointer transition-colors"
+                            title="Remove Skill"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Proficiency Slider */}
+                      <div className="flex items-center gap-3 pt-1 border-t border-slate-800/40 dark:border-slate-800">
+                        <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Proficiency Level:</span>
                         <input
                           type="range"
                           min="10"
@@ -1270,25 +1566,15 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           value={skill.level}
                           onChange={(e) => {
                             const updated = [...formData.skills];
-                            updated[idx].level = parseInt(e.target.value);
+                            updated[idx] = { ...updated[idx], level: parseInt(e.target.value) };
                             setFormData({ ...formData, skills: updated });
                           }}
-                          className="flex-1 accent-indigo-600"
+                          className="flex-1 accent-indigo-600 cursor-pointer"
                         />
-                        <span className="text-xs font-mono font-bold text-indigo-500 w-10 text-right">
+                        <span className="text-xs font-mono font-bold text-indigo-500 w-12 text-right">
                           {skill.level}%
                         </span>
                       </div>
-
-                      <button
-                        onClick={() => {
-                          const updated = formData.skills.filter((_, i) => i !== idx);
-                          setFormData({ ...formData, skills: updated });
-                        }}
-                        className="text-red-400 hover:text-red-300 p-1.5 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -1921,6 +2207,64 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   />
                 </div>
 
+                {/* Dynamic Navbar Menu Labels Customizer */}
+                <div className={`p-6 rounded-3xl border space-y-4 ${
+                  darkMode ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/60 border-indigo-200'
+                }`}>
+                  <div>
+                    <h4 className="text-sm font-bold flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-indigo-400" />
+                      <span>ন্যাভবার মেনু কাস্টমাইজেশন / Navbar Menu Labels</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      ওয়েবসাইটের সকল নেভিগেশন মেনুর নাম (Home, About, Projects, Blog ইত্যাদি) আপনার পছন্দমতো বাংলায় বা ইংরেজিতে পরিবর্তন করুন।
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[
+                      { key: 'home', defaultLabel: 'Home', bengaliHint: 'হোম' },
+                      { key: 'about', defaultLabel: 'About', bengaliHint: 'পরিচিতি / সম্পর্কে' },
+                      { key: 'projects', defaultLabel: 'Projects', bengaliHint: 'প্রজেক্টস / কাজসমূহ' },
+                      { key: 'blogs', defaultLabel: 'Blog', bengaliHint: 'ব্লগ / আর্টিকেল' },
+                      { key: 'experience', defaultLabel: 'Experience', bengaliHint: 'অভিজ্ঞতা' },
+                      { key: 'education', defaultLabel: 'Education', bengaliHint: 'শিক্ষা ও সনদ' },
+                      { key: 'gallery', defaultLabel: 'Gallery', bengaliHint: 'গ্যালারি' },
+                      { key: 'contact', defaultLabel: 'Contact', bengaliHint: 'যোগাযোগ' },
+                    ].map((navItem) => {
+                      const currentVal = formData.siteSettings.navCustomLabels?.[navItem.key] ?? '';
+                      return (
+                        <div key={navItem.key} className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-300">
+                            {navItem.defaultLabel} ({navItem.bengaliHint})
+                          </label>
+                          <input
+                            type="text"
+                            placeholder={navItem.defaultLabel}
+                            value={currentVal}
+                            onChange={(e) => {
+                              const updatedLabels = {
+                                ...(formData.siteSettings.navCustomLabels || {}),
+                                [navItem.key]: e.target.value
+                              };
+                              setFormData({
+                                ...formData,
+                                siteSettings: {
+                                  ...formData.siteSettings,
+                                  navCustomLabels: updatedLabels
+                                }
+                              });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-xs border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                              darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Sanity Cloud Project Connection Box */}
                 <div className={`p-6 rounded-3xl border space-y-4 ${
                   darkMode ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/60 border-indigo-200'
@@ -2160,9 +2504,40 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
               </div>
             )}
 
+            {/* MEDIA LIBRARY & ASSETS TAB */}
+            {activeTab === 'media' && (
+              <MediaLibraryTab 
+                portfolioData={formData} 
+                darkMode={darkMode} 
+              />
+            )}
+
             {/* 12. MESSAGES INBOX TAB */}
             {activeTab === 'messages' && (
               <MessagesInboxTab darkMode={darkMode} />
+            )}
+
+            {/* ANALYTICS INTELLIGENCE TAB */}
+            {activeTab === 'analytics' && (
+              <AnalyticsDashboardTab darkMode={darkMode} />
+            )}
+
+            {/* PROJECTS & CASE STUDIES TAB */}
+            {activeTab === 'projects' && (
+              <AdminProjectsTab
+                projects={formData.projects || []}
+                onChange={(newProjects) => setFormData({ ...formData, projects: newProjects })}
+                darkMode={darkMode}
+              />
+            )}
+
+            {/* BLOGS & ARTICLES TAB */}
+            {activeTab === 'blogs' && (
+              <AdminBlogsTab
+                blogs={formData.blogs || []}
+                onChange={(newBlogs) => setFormData({ ...formData, blogs: newBlogs })}
+                darkMode={darkMode}
+              />
             )}
 
           </main>

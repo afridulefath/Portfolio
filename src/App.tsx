@@ -14,6 +14,8 @@ import { ExperiencePage } from './pages/ExperiencePage';
 import { EducationPage } from './pages/EducationPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { ContactPage } from './pages/ContactPage';
+import { ProjectsPage } from './pages/ProjectsPage';
+import { BlogsPage } from './pages/BlogsPage';
 import { CmsStudioModal } from './components/CmsStudioModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { PortfolioData } from './types/portfolio';
@@ -143,6 +145,42 @@ export default function App() {
               path="/about" 
               element={
                 <AboutPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/projects" 
+              element={
+                <ProjectsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/project/:slug" 
+              element={
+                <ProjectsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/blogs" 
+              element={
+                <BlogsPage 
+                  data={data} 
+                  darkMode={darkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/blog/:slug" 
+              element={
+                <BlogsPage 
                   data={data} 
                   darkMode={darkMode} 
                 />

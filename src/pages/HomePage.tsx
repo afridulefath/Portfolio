@@ -13,7 +13,12 @@ import {
   Calendar,
   Building,
   MapPin,
-  ExternalLink
+  ExternalLink,
+  BookOpen,
+  Layers,
+  Clock,
+  Eye,
+  Star
 } from 'lucide-react';
 import { PortfolioData, GalleryItem } from '../types/portfolio';
 import { HeroSection } from '../components/HeroSection';
@@ -25,7 +30,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms }) => {
-  const { about, experiences, education, certificates, skills, gallery, contact, personal } = data;
+  const { about, experiences, education, certificates, skills, gallery, contact, personal, projects = [], blogs = [] } = data;
 
   // Selected representative items for preview
   const previewExperiences = experiences.slice(0, 2);
@@ -33,6 +38,8 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
   const previewCerts = certificates.slice(0, 3);
   const previewSkills = skills.slice(0, 6);
   const previewGallery = gallery.slice(0, 4);
+  const featuredProjects = projects.filter(p => p.featured).slice(0, 2).concat(projects.slice(0, 2)).slice(0, 2);
+  const featuredBlogs = blogs.filter(b => b.status === 'published' || !b.status).slice(0, 3);
 
   return (
     <div className="space-y-24 sm:space-y-32 pb-16">
@@ -55,7 +62,7 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
               <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                {about.title || 'About & Leadership Background'}
+                {about.storyTitle || about.title || 'About & Leadership Background'}
               </h2>
             </div>
 
@@ -74,7 +81,7 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
               <p className={`text-base sm:text-lg leading-relaxed ${
                 darkMode ? 'text-slate-300' : 'text-slate-600'
               }`}>
-                {about.summary || personal.bio}
+                {about.storySummary || about.summary || personal.bio}
               </p>
 
               {about.highlights && about.highlights.length > 0 && (
@@ -296,7 +303,172 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
         </div>
       </section>
 
-      {/* 5. Gallery Preview */}
+      {/* 5. Featured Projects & Case Studies */}
+      {featuredProjects.length > 0 && (
+        <section id="home-projects-preview" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">
+                <Briefcase className="w-4 h-4" />
+                <span>Selected Works & Case Studies</span>
+              </div>
+              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+                darkMode ? 'text-white' : 'text-slate-900'
+              }`}>
+                Featured Architectural Solutions
+              </h2>
+              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                Production-grade platforms and systems engineered for extreme scale.
+              </p>
+            </div>
+
+            <Link
+              id="home-projects-see-more"
+              to="/projects"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/20 group w-fit cursor-pointer"
+            >
+              <span>Explore All Projects</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {featuredProjects.map((proj) => (
+              <Link
+                key={proj.id}
+                to="/projects"
+                className={`group rounded-3xl border overflow-hidden transition-all duration-300 flex flex-col justify-between ${
+                  darkMode 
+                    ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50 hover:shadow-2xl' 
+                    : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow-xl shadow-xs'
+                }`}
+              >
+                <div className="relative aspect-16/9 w-full overflow-hidden bg-slate-950">
+                  <img
+                    src={proj.thumbnailUrl}
+                    alt={proj.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-indigo-300 border border-indigo-500/30">
+                      {proj.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight mb-2 group-hover:text-indigo-400 transition-colors">
+                      {proj.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                      {proj.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                    <div className="text-xs font-semibold text-slate-400">
+                      Role: <strong className="text-slate-200">{proj.myRole}</strong>
+                    </div>
+                    <span className="text-xs font-bold text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      <span>Case Study</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 6. Featured Insights & Articles */}
+      {featuredBlogs.length > 0 && (
+        <section id="home-blogs-preview" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-500 mb-2">
+                <BookOpen className="w-4 h-4" />
+                <span>Publications & Insights</span>
+              </div>
+              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+                darkMode ? 'text-white' : 'text-slate-900'
+              }`}>
+                Latest Engineering Articles
+              </h2>
+              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                Thought leadership, architectural blueprints, and deep dives.
+              </p>
+            </div>
+
+            <Link
+              id="home-blogs-see-more"
+              to="/blogs"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 transition-all shadow-md shadow-sky-600/20 group w-fit cursor-pointer"
+            >
+              <span>View All Articles</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredBlogs.map((b) => (
+              <Link
+                key={b.id}
+                to="/blogs"
+                className={`group rounded-3xl border overflow-hidden transition-all duration-300 flex flex-col justify-between ${
+                  darkMode 
+                    ? 'bg-slate-900/80 border-slate-800 hover:border-sky-500/50 hover:shadow-xl' 
+                    : 'bg-white border-slate-200 hover:border-sky-400 hover:shadow-lg shadow-xs'
+                }`}
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+                  <img
+                    src={b.coverImageUrl}
+                    alt={b.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-sky-300 border border-sky-500/30">
+                      {b.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-2">
+                      <span>{new Date(b.publishDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span>•</span>
+                      <span>{b.readTimeMinutes || 5} min read</span>
+                    </div>
+
+                    <h4 className="text-base font-bold tracking-tight mb-2 group-hover:text-sky-400 transition-colors line-clamp-2">
+                      {b.title}
+                    </h4>
+
+                    <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                      {b.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400">{b.authorName}</span>
+                    <span className="text-xs font-bold text-sky-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      <span>Read</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 7. Gallery Preview */}
       <section id="home-gallery-preview" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
