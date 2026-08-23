@@ -11,30 +11,29 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export class CmsService {
-  // ১. ডাটা লোড করার মেথড (ক্লাউড থেকে ব্যাকগ্রাউন্ড সিঙ্ক সহ)
+  // ১. ডাটা লোড করার মেথড (সুরক্ষিত ক্লাউড সিঙ্ক সহ)
   public static getData(): PortfolioData {
-    this.syncFromSupabase();
-
-    if (typeof window === 'undefined') {
-      return initialPortfolioData;
-    }
-    try {
+    if (typeof window !== 'undefined') {
+      this.syncFromSupabase();
+      
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          ...initialPortfolioData,
-          ...parsed,
-          personal: { ...initialPortfolioData.personal, ...(parsed.personal || {}) },
-          about: { ...initialPortfolioData.about, ...(parsed.about || {}) },
-          contact: { ...initialPortfolioData.contact, ...(parsed.contact || {}) },
-          seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
-          siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
-          cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
-        };
+        try {
+          const parsed = JSON.parse(stored);
+          return {
+            ...initialPortfolioData,
+            ...parsed,
+            personal: { ...initialPortfolioData.personal, ...(parsed.personal || {}) },
+            about: { ...initialPortfolioData.about, ...(parsed.about || {}) },
+            contact: { ...initialPortfolioData.contact, ...(parsed.contact || {}) },
+            seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
+            siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
+            cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
+          };
+        } catch (e) {
+          console.error('Failed to parse portfolio data from storage:', e);
+        }
       }
-    } catch (err) {
-      console.error('Failed to parse portfolio data from storage:', err);
     }
     return initialPortfolioData;
   }
@@ -66,7 +65,7 @@ export class CmsService {
     }
   }
 
-  // ৩. ব্যাকগ্রাউন্ড সিঙ্ক (যাতে অন্য যেকোনো ডিভাইসে লেটেস্ট ডাটা শো করে)
+  // ৩. ব্যাকগ্রাউন্ড সিঙ্ক (সুরক্ষিত মেকানিজম - যাতে ডেমো ডাটা দিয়ে ওভাররাইট না হয়)
   private static async syncFromSupabase() {
     if (typeof window === 'undefined') return;
     try {
@@ -76,7 +75,8 @@ export class CmsService {
         .eq('id', 1)
         .single();
 
-      if (data && data.content) {
+      // সুপাবেসে যদি আসল ডাটা থাকে এবং তা ডেমো ডাটা (Alex Vance) না হয়, তবেই লোকাল মেমোরি আপডেট করবে
+      if (data && data.content && data.content.personal?.fullName !== "Alex Vance") {
         const cloudDataStr = JSON.stringify(data.content);
         if (localStorage.getItem(STORAGE_KEY) !== cloudDataStr) {
           localStorage.setItem(STORAGE_KEY, cloudDataStr);
