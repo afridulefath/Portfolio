@@ -87,6 +87,13 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
     return () => window.removeEventListener('portfolio_messages_updated', handleMsgUpdate);
   }, []);
 
+  // Sync form data whenever modal opens or parent data updates
+  useEffect(() => {
+    if (isOpen && data) {
+      setFormData(JSON.parse(JSON.stringify(data)));
+    }
+  }, [isOpen, data]);
+
   // Lock body scroll when modal is open to prevent page jumps
   useEffect(() => {
     if (isOpen) {
