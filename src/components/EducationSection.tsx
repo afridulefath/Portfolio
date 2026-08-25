@@ -96,7 +96,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMo
                         <Calendar className="w-3 h-3 text-indigo-500" />
                         {edu.startYear} – {edu.endYear}
                       </span>
-                      {edu.grade && (
+                      {edu.grade && edu.grade.trim() !== '' && (
                         <p className="text-xs font-semibold text-emerald-500">
                           {edu.grade}
                         </p>

@@ -13,9 +13,11 @@ import {
   Image, 
   FileText, 
   Layers,
-  Sparkles
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { BlogPost, BlogImage } from '../types/portfolio';
+import { ImageUploader } from './ImageUploader';
 
 interface AdminBlogsTabProps {
   blogs: BlogPost[];
@@ -32,22 +34,32 @@ export const AdminBlogsTab: React.FC<AdminBlogsTabProps> = ({
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [previewMarkdown, setPreviewMarkdown] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'content' | 'metadata' | 'gallery' | 'seo'>('content');
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `post-${Date.now()}`;
+  };
 
   const handleStartCreate = () => {
     const newId = 'blog-' + Date.now();
     const newBlog: BlogPost = {
       id: newId,
-      slug: 'new-engineering-article-' + Date.now(),
+      slug: 'new-article-' + Date.now(),
       title: 'New Technical Article Title',
       subtitle: 'Insightful subtitle explaining the article scope',
       summary: 'Short summary of the article for cards and meta descriptions.',
-      content: `## Introduction to the System
+      content: `## Introduction to the Topic
 
-Start writing your technical article here using Markdown...
+Start writing your technical article or insights here using Markdown...
 
 ### Key Architectural Concepts
-* Concept 1: Asynchronous processing
-* Concept 2: Zero-downtime rolling updates
+* Concept 1: Scalability & Performance
+* Concept 2: High Availability Design
 
 \`\`\`typescript
 // Code snippet example
@@ -56,47 +68,83 @@ export const sampleFunction = () => {
 };
 \`\`\`
 
-### Conclusion
-Summarize key takeaways for developers.`,
+### Summary & Takeaways
+Summarize key takeaways for readers.`,
       coverImageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
       category: 'Cloud & Architecture',
-      tags: ['Cloud', 'Architecture', 'TypeScript'],
+      tags: ['Engineering', 'Architecture', 'Tech'],
       authorName: 'Alex Vance',
       authorRole: 'Senior Solutions Architect',
       authorAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       publishDate: new Date().toISOString().split('T')[0],
       status: 'published',
       featured: false,
-      views: 50,
+      views: 1,
       readTimeMinutes: 5,
     };
     setEditingBlog(newBlog);
     setIsCreating(true);
+    setActiveTab('content');
   };
 
   const handleSaveBlog = () => {
     if (!editingBlog) return;
 
+    const cleanTitle = editingBlog.title?.trim() || 'Untitled Article';
+    const finalSlug = (editingBlog.slug?.trim() || generateSlug(cleanTitle));
+    
+    const blogToSave: BlogPost = {
+      ...editingBlog,
+      id: editingBlog.id || ('blog-' + Date.now()),
+      title: cleanTitle,
+      slug: finalSlug,
+      subtitle: editingBlog.subtitle?.trim() || '',
+      summary: editingBlog.summary?.trim() || '',
+      content: editingBlog.content || '',
+      category: editingBlog.category?.trim() || 'Engineering',
+      tags: editingBlog.tags && editingBlog.tags.length > 0 ? editingBlog.tags : ['Engineering'],
+      publishDate: editingBlog.publishDate || new Date().toISOString().split('T')[0],
+      status: editingBlog.status || 'published',
+      coverImageUrl: editingBlog.coverImageUrl || '',
+      authorName: editingBlog.authorName?.trim() || 'Author',
+      readTimeMinutes: Number(editingBlog.readTimeMinutes) || 5,
+    };
+
+    let updatedList: BlogPost[];
     if (isCreating) {
-      onChange([editingBlog, ...blogs]);
+      updatedList = [blogToSave, ...blogs.filter(b => b.id !== blogToSave.id)];
     } else {
-      onChange(blogs.map(b => b.id === editingBlog.id ? editingBlog : b));
+      const exists = blogs.some(b => b.id === blogToSave.id);
+      if (exists) {
+        updatedList = blogs.map(b => b.id === blogToSave.id ? blogToSave : b);
+      } else {
+        updatedList = [blogToSave, ...blogs];
+      }
     }
+
+    onChange(updatedList);
     setEditingBlog(null);
     setIsCreating(false);
+    setSaveSuccessMsg('আর্টিকেল সফলভাবে সংরক্ষিত হয়েছে! / Article saved successfully!');
+    setTimeout(() => setSaveSuccessMsg(null), 3500);
   };
 
   const handleDeleteBlog = (id: string) => {
-    if (confirm('Are you sure you want to delete this article?')) {
-      onChange(blogs.filter(b => b.id !== id));
+    if (confirm('Are you sure you want to delete this article? / আপনি কি এই আর্টিকেল মুছে ফেলতে চান?')) {
+      const updatedList = blogs.filter(b => b.id !== id);
+      onChange(updatedList);
       if (editingBlog?.id === id) {
         setEditingBlog(null);
+        setIsCreating(false);
       }
+      setSaveSuccessMsg('আর্টিকেল মুছে ফেলা হয়েছে / Article deleted.');
+      setTimeout(() => setSaveSuccessMsg(null), 3000);
     }
   };
 
   const handleToggleFeatured = (id: string) => {
-    onChange(blogs.map(b => b.id === id ? { ...b, featured: !b.featured } : b));
+    const updatedList = blogs.map(b => b.id === id ? { ...b, featured: !b.featured } : b);
+    onChange(updatedList);
   };
 
   return (
@@ -124,6 +172,13 @@ Summarize key takeaways for developers.`,
           </button>
         )}
       </div>
+
+      {saveSuccessMsg && (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-fade-in shadow-xs">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+          <span>{saveSuccessMsg}</span>
+        </div>
+      )}
 
       {/* EDITING FORM */}
       {editingBlog ? (
@@ -323,16 +378,29 @@ Summarize key takeaways for developers.`,
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold mb-1">Cover Image URL</label>
-                <input
-                  type="text"
+              <div className={`p-4 rounded-2xl border space-y-2.5 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <ImageUploader
+                  label="আর্টিকেল কভার ছবি / Cover Image"
+                  sublabel="ডিভাইস থেকে ফাইল নির্বাচন করুন অথবা ড্রপ করুন"
                   value={editingBlog.coverImageUrl}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, coverImageUrl: e.target.value })}
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  onChange={(url) => setEditingBlog({ ...editingBlog, coverImageUrl: url })}
+                  darkMode={darkMode}
+                  aspectRatio="wide"
                 />
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    কভার ছবি Alt Text (Google SEO ও স্ক্রিন রিডার)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Distributed Cloud Architecture and Microservices Pattern Overview"
+                    value={editingBlog.coverImageAlt || ''}
+                    onChange={(e) => setEditingBlog({ ...editingBlog, coverImageAlt: e.target.value })}
+                    className={`w-full p-2 rounded-xl text-xs border ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  />
+                </div>
               </div>
 
               <div>
@@ -446,16 +514,17 @@ Summarize key takeaways for developers.`,
                       </button>
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-400">Image URL</label>
-                      <input
-                        type="text"
+                      <ImageUploader
+                        label="ডায়াগ্রাম / ছবি / Diagram Image"
+                        sublabel="ডিভাইস থেকে ফাইল নির্বাচন করুন"
                         value={img.url}
-                        onChange={(e) => {
+                        onChange={(url) => {
                           const updated = [...editingBlog.galleryImages!];
-                          updated[idx].url = e.target.value;
+                          updated[idx].url = url;
                           setEditingBlog({ ...editingBlog, galleryImages: updated });
                         }}
-                        className="w-full p-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-white"
+                        darkMode={darkMode}
+                        aspectRatio="video"
                       />
                     </div>
                     <div>
@@ -480,20 +549,35 @@ Summarize key takeaways for developers.`,
           {/* TAB 4: SEO */}
           {activeTab === 'seo' && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold mb-1">SEO Title</label>
-                <input
-                  type="text"
-                  value={editingBlog.seoTitle || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, seoTitle: e.target.value })}
-                  placeholder="Custom Meta Title for search engine listings"
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1">SEO Title (Search Engine Result Title)</label>
+                  <input
+                    type="text"
+                    value={editingBlog.seoTitle || ''}
+                    onChange={(e) => setEditingBlog({ ...editingBlog, seoTitle: e.target.value })}
+                    placeholder="Custom Meta Title for search engine listings"
+                    className={`w-full p-2.5 rounded-xl text-xs border ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1">URL Slug (/blog/your-slug)</label>
+                  <input
+                    type="text"
+                    value={editingBlog.slug}
+                    onChange={(e) => setEditingBlog({ ...editingBlog, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '-') })}
+                    placeholder="e.g. distributed-cloud-architecture"
+                    className={`w-full p-2.5 rounded-xl text-xs border font-mono ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-sky-400' : 'bg-slate-50 border-slate-200 text-sky-600'
+                    }`}
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs font-semibold mb-1">SEO Description</label>
+                <label className="block text-xs font-semibold mb-1">SEO Meta Description (Google Search Result)</label>
                 <textarea
                   rows={3}
                   value={editingBlog.seoDescription || ''}
@@ -502,6 +586,33 @@ Summarize key takeaways for developers.`,
                   className={`w-full p-2.5 rounded-xl text-xs border ${
                     darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
                   }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1">Focus Keywords (কমা দিয়ে আলাদা করুন)</label>
+                <input
+                  type="text"
+                  value={editingBlog.seoKeywords?.join(', ') || ''}
+                  onChange={(e) => setEditingBlog({
+                    ...editingBlog,
+                    seoKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                  })}
+                  placeholder="e.g. Cloud, Microservices, Event-Driven, System Architecture"
+                  className={`w-full p-2.5 rounded-xl text-xs border ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <ImageUploader
+                  label="সোশ্যাল শেয়ার ইমেজ / Open Graph Share Image"
+                  sublabel="এই আর্টিকেলের লিংক শেয়ার করার সময় যে প্রিভিউ ছবি দেখাবে"
+                  value={editingBlog.ogImageUrl || ''}
+                  onChange={(url) => setEditingBlog({ ...editingBlog, ogImageUrl: url })}
+                  darkMode={darkMode}
+                  aspectRatio="landscape"
                 />
               </div>
             </div>

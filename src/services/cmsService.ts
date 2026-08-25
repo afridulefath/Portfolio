@@ -32,8 +32,16 @@ export class CmsService {
             seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
             siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
             cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
-            projects: Array.isArray(parsed.projects) ? parsed.projects : initialPortfolioData.projects,
-            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : initialPortfolioData.blogs,
+            projects: Array.isArray(parsed.projects) ? parsed.projects : (initialPortfolioData.projects || []),
+            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : (initialPortfolioData.blogs || []),
+            gallery: Array.isArray(parsed.gallery) ? parsed.gallery : initialPortfolioData.gallery,
+            experiences: Array.isArray(parsed.experiences) ? parsed.experiences : initialPortfolioData.experiences,
+            education: Array.isArray(parsed.education) ? parsed.education : initialPortfolioData.education,
+            certificates: Array.isArray(parsed.certificates) ? parsed.certificates : initialPortfolioData.certificates,
+            skills: Array.isArray(parsed.skills) ? parsed.skills : initialPortfolioData.skills,
+            socials: Array.isArray(parsed.socials) ? parsed.socials : initialPortfolioData.socials,
+            mediaLibrary: Array.isArray(parsed.mediaLibrary) ? parsed.mediaLibrary : (initialPortfolioData.mediaLibrary || []),
+            mediaFolders: Array.isArray(parsed.mediaFolders) ? parsed.mediaFolders : (initialPortfolioData.mediaFolders || []),
           };
         } catch (e) {
           console.error('Failed to parse portfolio data from storage:', e);

@@ -41,7 +41,19 @@ import {
   Flame,
   BarChart3,
   BookOpen,
-  FolderOpen
+  FolderOpen,
+  Eye,
+  EyeOff,
+  MapPin,
+  Building2,
+  Search,
+  ExternalLink,
+  Code2,
+  Copy,
+  FileCode,
+  Check,
+  HelpCircle,
+  CheckCheck
 } from 'lucide-react';
 import { 
   PortfolioData, 
@@ -65,6 +77,14 @@ import { AnalyticsDashboardTab } from './AnalyticsDashboardTab';
 import { AdminProjectsTab } from './AdminProjectsTab';
 import { AdminBlogsTab } from './AdminBlogsTab';
 import { MediaLibraryTab } from './media/MediaLibraryTab';
+import { 
+  generateSitemapXml, 
+  generateRobotsTxt, 
+  generatePersonSchema, 
+  generateWebSiteSchema, 
+  downloadTextFile, 
+  getBaseUrl 
+} from '../utils/seoUtils';
 
 interface CmsStudioModalProps {
   data: PortfolioData;
@@ -96,9 +116,18 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showCurrentPass, setShowCurrentPass] = useState<boolean>(false);
+  const [showNewPass, setShowNewPass] = useState<boolean>(false);
+  const [showConfirmPass, setShowConfirmPass] = useState<boolean>(false);
 
   // Messages Unread Counter
   const [unreadCount, setUnreadCount] = useState<number>(() => MessageService.getUnreadCount());
+
+  // SEO Tab state
+  const [seoSubTab, setSeoSubTab] = useState<'metadata' | 'social' | 'google' | 'sitemap' | 'robots' | 'schema'>('metadata');
+  const [copiedSitemap, setCopiedSitemap] = useState<boolean>(false);
+  const [copiedRobots, setCopiedRobots] = useState<boolean>(false);
+  const [copiedSchema, setCopiedSchema] = useState<boolean>(false);
 
   useEffect(() => {
     const handleMsgUpdate = () => {
@@ -991,9 +1020,10 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Company Name</label>
+                          <label className="block text-xs font-semibold mb-1">Company Name / প্রতিষ্ঠানের নাম</label>
                           <input
                             type="text"
+                            placeholder="e.g. Google, Acme Inc."
                             value={exp.company}
                             onChange={(e) => {
                               const updated = [...formData.experiences];
@@ -1007,9 +1037,10 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Role Title</label>
+                          <label className="block text-xs font-semibold mb-1">Role Title / পদের নাম</label>
                           <input
                             type="text"
+                            placeholder="e.g. Senior Software Architect"
                             value={exp.role}
                             onChange={(e) => {
                               const updated = [...formData.experiences];
@@ -1023,11 +1054,55 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Location / Address & Employment Type */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Start Date</label>
+                          <label className="block text-xs font-semibold mb-1 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>Location & Address / লোকেশন বা ঠিকানা *</span>
+                          </label>
                           <input
                             type="text"
+                            placeholder="e.g. San Francisco, CA / ঢাকা, বাংলাদেশ / Remote"
+                            value={exp.location || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.experiences];
+                              updated[idx].location = e.target.value;
+                              setFormData({ ...formData, experiences: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Employment Type / চাকুরির ধরন</label>
+                          <select
+                            value={exp.employmentType || 'Full-time'}
+                            onChange={(e: any) => {
+                              const updated = [...formData.experiences];
+                              updated[idx].employmentType = e.target.value;
+                              setFormData({ ...formData, experiences: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          >
+                            <option value="Full-time">Full-time (ফুল-টাইম)</option>
+                            <option value="Contract">Contract (চুক্তিভিত্তিক)</option>
+                            <option value="Part-time">Part-time (পার্ট-টাইম)</option>
+                            <option value="Remote">Remote (রিমোট)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Start Date / শুরুর সময়</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2022 / Jan 2022"
                             value={exp.startDate}
                             onChange={(e) => {
                               const updated = [...formData.experiences];
@@ -1041,17 +1116,21 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold mb-1">End Date</label>
+                          <label className="block text-xs font-semibold mb-1">End Date / সমাপ্তি সময়</label>
                           <input
                             type="text"
+                            placeholder="e.g. Present / Dec 2024"
                             value={exp.endDate}
                             onChange={(e) => {
                               const updated = [...formData.experiences];
                               updated[idx].endDate = e.target.value;
                               setFormData({ ...formData, experiences: updated });
                             }}
+                            disabled={exp.current}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
-                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                              exp.current 
+                                ? 'opacity-50 cursor-not-allowed bg-slate-900 border-slate-800' 
+                                : darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
                           />
                         </div>
@@ -1064,20 +1143,39 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             onChange={(e) => {
                               const updated = [...formData.experiences];
                               updated[idx].current = e.target.checked;
+                              if (e.target.checked) updated[idx].endDate = 'Present';
                               setFormData({ ...formData, experiences: updated });
                             }}
                             className="w-4 h-4 text-indigo-600 rounded"
                           />
                           <label htmlFor={`curr-${exp.id}`} className="text-xs font-semibold cursor-pointer">
-                            Current Role
+                            Currently Working Here / বর্তমান কর্মস্থল
                           </label>
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold mb-1">Role Summary</label>
+                        <label className="block text-xs font-semibold mb-1">Company Website URL (ঐচ্ছিক)</label>
+                        <input
+                          type="url"
+                          placeholder="https://company.com"
+                          value={exp.companyUrl || ''}
+                          onChange={(e) => {
+                            const updated = [...formData.experiences];
+                            updated[idx].companyUrl = e.target.value;
+                            setFormData({ ...formData, experiences: updated });
+                          }}
+                          className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Role Summary / সারসংক্ষেপ</label>
                         <textarea
                           rows={2}
+                          placeholder="কাজের সারসংক্ষেপ বর্ণনা লিখুন..."
                           value={exp.summary}
                           onChange={(e) => {
                             const updated = [...formData.experiences];
@@ -1090,11 +1188,53 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         />
                       </div>
 
+                      {/* Key Responsibilities & Achievements */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            Key Responsibilities (প্রতি লাইনে একটি করে)
+                          </label>
+                          <textarea
+                            rows={3}
+                            placeholder="Architected scalable microservices&#10;Mentored 10+ junior engineers"
+                            value={exp.responsibilities?.join('\n') || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.experiences];
+                              updated[idx].responsibilities = e.target.value.split('\n').filter(Boolean);
+                              setFormData({ ...formData, experiences: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            Key Achievements (প্রতি লাইনে একটি করে)
+                          </label>
+                          <textarea
+                            rows={3}
+                            placeholder="Reduced cloud cost by 35%&#10;Delivered flagship project 2 weeks ahead"
+                            value={exp.achievements?.join('\n') || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.experiences];
+                              updated[idx].achievements = e.target.value.split('\n').filter(Boolean);
+                              setFormData({ ...formData, experiences: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
                       {/* Tech stack comma separated */}
                       <div>
                         <label className="block text-xs font-semibold mb-1">Technologies (comma-separated)</label>
                         <input
                           type="text"
+                          placeholder="TypeScript, React, Node.js, AWS"
                           value={exp.technologies?.join(', ') || ''}
                           onChange={(e) => {
                             const updated = [...formData.experiences];
@@ -1647,7 +1787,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Title</label>
+                          <label className="block text-xs font-semibold mb-1">Title / শিরোনাম</label>
                           <input
                             type="text"
                             placeholder="Title"
@@ -1664,7 +1804,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Category</label>
+                          <label className="block text-xs font-semibold mb-1">Category / ক্যাটাগরি</label>
                           <select
                             value={item.category}
                             onChange={(e: any) => {
@@ -1684,21 +1824,75 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold mb-1">Caption / Description</label>
-                        <input
-                          type="text"
-                          placeholder="Caption / Description"
-                          value={item.caption}
-                          onChange={(e) => {
-                            const updated = [...formData.gallery];
-                            updated[idx].caption = e.target.value;
-                            setFormData({ ...formData, gallery: updated });
-                          }}
-                          className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Date / তারিখ বা বছর (যেমন: 2024 / Oct 2024)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2024 / Oct 2024 / 12 Dec 2024"
+                            value={item.date || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.gallery];
+                              updated[idx].date = e.target.value;
+                              setFormData({ ...formData, gallery: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Tags / ট্যাগসমূহ (কমা দিয়ে আলাদা করুন)</label>
+                          <input
+                            type="text"
+                            placeholder="Tech, Architecture, Event"
+                            value={item.tags?.join(', ') || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.gallery];
+                              updated[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              setFormData({ ...formData, gallery: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Caption / Description / ক্যাপশন</label>
+                          <input
+                            type="text"
+                            placeholder="Caption / Description"
+                            value={item.caption}
+                            onChange={(e) => {
+                              const updated = [...formData.gallery];
+                              updated[idx].caption = e.target.value;
+                              setFormData({ ...formData, gallery: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Image Alt Text (SEO & Accessibility)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Alex Vance speaking at Global Tech Conference"
+                            value={item.alt || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.gallery];
+                              updated[idx].alt = e.target.value;
+                              setFormData({ ...formData, gallery: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2040,87 +2234,576 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
               </div>
             )}
 
-            {/* 9. SEO TAB */}
+            {/* 9. SEO & GOOGLE INDEXING TAB */}
             {activeTab === 'seo' && (
-              <div className="space-y-6 max-w-3xl">
-                <div>
-                  <h3 className="text-xl font-bold">SEO & Metadata Settings</h3>
-                  <p className="text-xs text-slate-400">Controls Google search indexing, Open Graph social share cards, and canonical links.</p>
+              <div className="space-y-6 max-w-4xl">
+                {/* Header with quick stats */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-indigo-500" />
+                      <span>SEO & Google Search Indexing Suite</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      সার্চ ইঞ্জিন অপটিমাইজেশন, গুগল ইনডেক্সিং, সোশ্যাল শেয়ার প্রিভিউ এবং সাইটম্যাপ ম্যানেজমেন্ট।
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      SEO Engine Active
+                    </span>
+                  </div>
                 </div>
 
-                {/* OG Share Image Direct Device Upload */}
-                <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <ImageUploader
-                    label="সোশ্যাল শেয়ার ইমেজ / Open Graph Share Image"
-                    sublabel="লিংক শেয়ার করার সময় যে প্রিভিউ ছবি দেখাবে (Facebook, Twitter, LinkedIn)"
-                    value={formData.seo.ogImageUrl}
-                    onChange={(url) => setFormData({
-                      ...formData,
-                      seo: { ...formData.seo, ogImageUrl: url }
-                    })}
-                    darkMode={darkMode}
-                  />
+                {/* Sub-tabs Navigation */}
+                <div className={`flex flex-wrap items-center gap-1.5 p-1 rounded-2xl border ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100 border-slate-200'
+                }`}>
+                  {[
+                    { id: 'metadata', label: '1. Meta & Titles', icon: FileText },
+                    { id: 'social', label: '2. Social & OG Cards', icon: Share2 },
+                    { id: 'google', label: '3. Google Console & GA4', icon: Search },
+                    { id: 'sitemap', label: '4. XML Sitemap', icon: FileCode },
+                    { id: 'robots', label: '5. robots.txt', icon: Code2 },
+                    { id: 'schema', label: '6. Schema.org (JSON-LD)', icon: Sparkles },
+                  ].map(tab => {
+                    const Icon = tab.icon;
+                    const isActive = seoSubTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setSeoSubTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : darkMode
+                            ? 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Meta Title</label>
-                  <input
-                    type="text"
-                    value={formData.seo.metaTitle}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      seo: { ...formData.seo, metaTitle: e.target.value }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
+                {/* SUBTAB 1: META & TITLES */}
+                {seoSubTab === 'metadata' && (
+                  <div className="space-y-5">
+                    {/* SEO Health Quick Audit */}
+                    <div className={`p-4 rounded-2xl border ${
+                      darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-indigo-50/50 border-indigo-100'
+                    }`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
+                          SEO Readiness Audit
+                        </span>
+                        <span className="text-xs font-mono font-bold text-slate-400">
+                          Title: {(formData.seo.metaTitle || '').length}/60 chars | Desc: {(formData.seo.metaDescription || '').length}/160 chars
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <span>Dynamic Meta tags</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <span>Canonical URLs</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <span>Schema JSON-LD</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${formData.seo.ogImageUrl ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {formData.seo.ogImageUrl ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
+                          <span>OG Share Image</span>
+                        </div>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Meta Description</label>
-                  <textarea
-                    rows={3}
-                    value={formData.seo.metaDescription}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      seo: { ...formData.seo, metaDescription: e.target.value }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none resize-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-semibold">
+                          Meta Title (Google Search Result Heading)
+                        </label>
+                        <span className={`text-[11px] font-mono ${
+                          (formData.seo.metaTitle || '').length > 60 ? 'text-amber-400' : 'text-slate-400'
+                        }`}>
+                          {(formData.seo.metaTitle || '').length} / 60 characters (Optimal: 50-60)
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.seo.metaTitle}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seo: { ...formData.seo, metaTitle: e.target.value }
+                        })}
+                        placeholder="e.g. Alex Vance | Senior Solutions Architect & Staff Engineer"
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-indigo-500' : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500'
+                        }`}
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Keywords (comma-separated)</label>
-                  <input
-                    type="text"
-                    value={formData.seo.keywords?.join(', ') || ''}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      seo: { ...formData.seo, keywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-semibold">
+                          Meta Description (Google Search Snippet)
+                        </label>
+                        <span className={`text-[11px] font-mono ${
+                          (formData.seo.metaDescription || '').length > 160 ? 'text-amber-400' : 'text-slate-400'
+                        }`}>
+                          {(formData.seo.metaDescription || '').length} / 160 characters (Optimal: 140-160)
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={formData.seo.metaDescription}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seo: { ...formData.seo, metaDescription: e.target.value }
+                        })}
+                        placeholder="Comprehensive 1-2 sentence overview of your skillset, background, and enterprise achievements."
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none resize-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-indigo-500' : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500'
+                        }`}
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Canonical URL</label>
-                  <input
-                    type="text"
-                    value={formData.seo.canonicalUrl}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      seo: { ...formData.seo, canonicalUrl: e.target.value }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5">
+                          Canonical Base URL (Website Domain)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="https://alexvance.dev or https://yourname.vercel.app"
+                          value={formData.seo.canonicalUrl}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            seo: { ...formData.seo, canonicalUrl: e.target.value }
+                          })}
+                          className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                            darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                        <span className="block text-[11px] text-slate-400 mt-1">
+                          সাইটম্যাপ এবং ক্যানোনিকাল ট্যাগ তৈরিতে ব্যবহৃত হবে।
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5">
+                          Focus Keywords (কমা দিয়ে আলাদা করুন)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.seo.keywords?.join(', ') || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            seo: { ...formData.seo, keywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                          })}
+                          placeholder="Solutions Architect, Staff Engineer, TypeScript, Cloud"
+                          className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                            darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                        <span className="block text-[11px] text-slate-400 mt-1">
+                          {formData.seo.keywords?.length || 0} টি কি-ওয়ার্ড যুক্ত করা হয়েছে।
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Directives Toggles */}
+                    <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                      darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="index-follow-toggle"
+                          checked={formData.seo.indexFollow !== false}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            seo: { ...formData.seo, indexFollow: e.target.checked }
+                          })}
+                          className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <div>
+                          <label htmlFor="index-follow-toggle" className="text-xs font-bold cursor-pointer">
+                            Search Engine Indexing & Robot Following (index, follow)
+                          </label>
+                          <p className="text-[11px] text-slate-400">
+                            গুগল ও বিং সার্চ ইঞ্জিনকে সাইটের সব পেজ ক্রল ও ইনডেক্স করার অনুমতি দেয়।
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="structured-data-toggle"
+                          checked={formData.seo.structuredDataEnabled !== false}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            seo: { ...formData.seo, structuredDataEnabled: e.target.checked }
+                          })}
+                          className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <div>
+                          <label htmlFor="structured-data-toggle" className="text-xs font-bold cursor-pointer">
+                            Schema.org JSON-LD Structured Data
+                          </label>
+                          <p className="text-[11px] text-slate-400">
+                            গুগল সার্চে Rich Snippet ও Person Card পাওয়ার জন্য।
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 2: SOCIAL & OPEN GRAPH */}
+                {seoSubTab === 'social' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Left: Uploader */}
+                      <div className="space-y-4">
+                        <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                          <ImageUploader
+                            label="সোশ্যাল শেয়ার ইমেজ / Open Graph Share Image (1200x630)"
+                            sublabel="লিংক ফেসবুকে, হোয়াটসঅ্যাপে বা লিঙ্কডইনে শেয়ার করার সময় যে ব্যানার ছবি দেখাবে"
+                            value={formData.seo.ogImageUrl}
+                            onChange={(url) => setFormData({
+                              ...formData,
+                              seo: { ...formData.seo, ogImageUrl: url }
+                            })}
+                            darkMode={darkMode}
+                            aspectRatio="landscape"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">Twitter / X Handle (e.g. @username)</label>
+                          <input
+                            type="text"
+                            placeholder="@alexvance_dev"
+                            value={formData.seo.twitterHandle || ''}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              seo: { ...formData.seo, twitterHandle: e.target.value }
+                            })}
+                            className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right: Live Social Card Simulator */}
+                      <div className="space-y-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Live Social Share Card Preview (Facebook, LinkedIn, Discord)
+                        </span>
+
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-xl max-w-sm mx-auto">
+                          <div className="aspect-[1.91/1] w-full bg-slate-900 relative overflow-hidden flex items-center justify-center">
+                            {formData.seo.ogImageUrl ? (
+                              <img
+                                src={formData.seo.ogImageUrl}
+                                alt="OG Preview"
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="p-4 text-center">
+                                <Share2 className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+                                <span className="text-xs text-slate-500">No OG image selected</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-4 bg-slate-900/90 border-t border-slate-800 space-y-1">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                              {formData.seo.canonicalUrl ? new URL(formData.seo.canonicalUrl.startsWith('http') ? formData.seo.canonicalUrl : `https://${formData.seo.canonicalUrl}`).hostname : 'alexvance.dev'}
+                            </span>
+                            <h4 className="text-xs font-bold text-white line-clamp-1">
+                              {formData.seo.metaTitle || `${formData.personal.fullName} - Portfolio`}
+                            </h4>
+                            <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                              {formData.seo.metaDescription || formData.personal.tagline}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 3: GOOGLE CONSOLE & GA4 */}
+                {seoSubTab === 'google' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Google Site Verification */}
+                      <div className={`p-5 rounded-2xl border space-y-3 ${
+                        darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center">
+                            <Search className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold">Google Search Console</h4>
+                            <span className="text-[10px] text-slate-400">Site Verification Token</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            Verification Token / HTML Tag Content
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. dGVzdC12ZXJpZmljYXRpb24tdG9rZW4..."
+                            value={formData.seo.googleSiteVerification || ''}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              // If user pastes whole meta tag: <meta name="google-site-verification" content="XYZ" />
+                              const match = val.match(/content=["'](.*?)["']/);
+                              if (match && match[1]) val = match[1];
+                              setFormData({
+                                ...formData,
+                                seo: { ...formData.seo, googleSiteVerification: val }
+                              });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-xs font-mono border outline-none ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                            }`}
+                          />
+                          <span className="block text-[10px] text-slate-400 mt-1">
+                            গুগল সার্চ কনসোল থেকে প্রাপ্ত HTML Tag এর <code>content="..."</code> টোকেন এখানে দিন।
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Google Analytics 4 */}
+                      <div className={`p-5 rounded-2xl border space-y-3 ${
+                        darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                            <BarChart3 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold">Google Analytics 4 (GA4)</h4>
+                            <span className="text-[10px] text-slate-400">Measurement ID</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            GA4 Measurement ID (G-XXXXXXXXXX)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="G-ABC123XYZ"
+                            value={formData.seo.googleAnalyticsId || ''}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              seo: { ...formData.seo, googleAnalyticsId: e.target.value.trim() }
+                            })}
+                            className={`w-full px-3 py-2 rounded-xl text-xs font-mono border outline-none ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                            }`}
+                          />
+                          <span className="block text-[10px] text-slate-400 mt-1">
+                            গুগল অ্যানালিটিক্স প্রোপার্টি থেকে <code>G-XXXXXX</code> আইডি দিলে স্বয়ংক্রিয়ভাবে ট্র্যাকিং চালু হবে।
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submission Guidelines in Bengali & English */}
+                    <div className={`p-5 rounded-2xl border space-y-3 ${
+                      darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                        <HelpCircle className="w-4 h-4" />
+                        <span>গুগল সার্চে আপনার সাইট দ্রুত ইনডেক্স করার উপায় / Google Indexing Guide</span>
+                      </h4>
+                      <ol className="list-decimal list-inside text-xs space-y-2 text-slate-300 leading-relaxed">
+                        <li>
+                          <strong>Google Search Console</strong> (<a href="https://search.google.com/search-console" target="_blank" rel="noreferrer" className="text-indigo-400 underline">search.google.com</a>)-এ যান এবং আপনার ডোমেইন যুক্ত করুন।
+                        </li>
+                        <li>
+                          যাচাইকরণের (Verification) জন্য <strong>HTML Tag</strong> অপশন বেছে নিন এবং টোকেনটি উপরের ঘরে পেস্ট করুন।
+                        </li>
+                        <li>
+                          সাইট পাবলিশ হওয়ার পর সার্চ কনসোলে <strong>Sitemaps</strong> সেকশনে গিয়ে <code>sitemap.xml</code> সাবমিট করুন।
+                        </li>
+                        <li>
+                          ২৪-৪৮ ঘণ্টার মধ্যে গুগল রোবট আপনার সব পেজ, প্রজেক্ট এবং ব্লগ ইনডেক্স করে সার্চ ফলাফলে যুক্ত করবে।
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 4: XML SITEMAP */}
+                {seoSubTab === 'sitemap' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold flex items-center gap-2">
+                          <FileCode className="w-4 h-4 text-indigo-400" />
+                          <span>Live Dynamic XML Sitemap</span>
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          আপনার সব পেজ, {formData.projects?.length || 0} টি প্রজেক্ট এবং {formData.blogs?.length || 0} টি ব্লগের ইউআরএল সহ তৈরি।
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const xml = generateSitemapXml(formData);
+                            navigator.clipboard.writeText(xml);
+                            setCopiedSitemap(true);
+                            setTimeout(() => setCopiedSitemap(false), 2500);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                            copiedSitemap
+                              ? 'bg-emerald-600 text-white border-emerald-500'
+                              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                          }`}
+                        >
+                          {copiedSitemap ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedSitemap ? 'Copied XML!' : 'Copy XML'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const xml = generateSitemapXml(formData);
+                            downloadTextFile(xml, 'sitemap.xml', 'application/xml');
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download sitemap.xml</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 font-mono text-[11px] text-slate-300 max-h-72 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap">{generateSitemapXml(formData)}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 5: ROBOTS.TXT */}
+                {seoSubTab === 'robots' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold flex items-center gap-2">
+                          <Code2 className="w-4 h-4 text-emerald-400" />
+                          <span>Live robots.txt Configuration</span>
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          Crawler directives for Googlebot, Bingbot, and other verified web crawlers.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const txt = generateRobotsTxt(formData);
+                            navigator.clipboard.writeText(txt);
+                            setCopiedRobots(true);
+                            setTimeout(() => setCopiedRobots(false), 2500);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                            copiedRobots
+                              ? 'bg-emerald-600 text-white border-emerald-500'
+                              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                          }`}
+                        >
+                          {copiedRobots ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedRobots ? 'Copied!' : 'Copy robots.txt'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const txt = generateRobotsTxt(formData);
+                            downloadTextFile(txt, 'robots.txt', 'text/plain');
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download robots.txt</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 font-mono text-xs text-emerald-400">
+                      <pre className="whitespace-pre-wrap">{generateRobotsTxt(formData)}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 6: SCHEMA.ORG JSON-LD */}
+                {seoSubTab === 'schema' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-400" />
+                          <span>Schema.org JSON-LD Structured Data Preview</span>
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          Person, Profile, and WebSite schemas automatically injected on all pages.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <a
+                          href="https://search.google.com/test/rich-results"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Test in Google Rich Results</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const schema = generatePersonSchema(formData);
+                            navigator.clipboard.writeText(JSON.stringify(schema, null, 2));
+                            setCopiedSchema(true);
+                            setTimeout(() => setCopiedSchema(false), 2500);
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {copiedSchema ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedSchema ? 'Copied JSON!' : 'Copy Schema'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 font-mono text-[11px] text-amber-300 max-h-72 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(generatePersonSchema(formData), null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2340,14 +3023,20 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {/* 11. SECURITY & CREDENTIALS (USERNAME & PASSWORD) MANAGEMENT TAB */}
             {activeTab === 'security' && (
               <div className="space-y-6 max-w-2xl">
-                <div>
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <KeyRound className="w-5 h-5 text-amber-400" />
-                    <span>ইউজারনেম ও পাসওয়ার্ড সিকিউরিটি / Admin Credentials Security</span>
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    এডমিন প্যানেলে প্রবেশের ইউজারনেম এবং পাসওয়ার্ড উভয়ই এখান থেকে পরিবর্তন করুন।
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <KeyRound className="w-5 h-5 text-amber-400" />
+                      <span>ইউজারনেম ও পাসওয়ার্ড সিকিউরিটি / Admin Credentials Security</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      এডমিন প্যানেলে প্রবেশের ইউজারনেম এবং পাসওয়ার্ড উভয়ই এখান থেকে নিরাপদভাবে পরিবর্তন করুন।
+                    </p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>ইউজার: {AuthService.getStoredUsername()}</span>
+                  </div>
                 </div>
 
                 <form onSubmit={handleUpdateCredentials} className={`p-6 rounded-3xl border space-y-5 ${
@@ -2356,8 +3045,11 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   
                   {/* Current Credentials Verification */}
                   <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
-                    <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                      বর্তমান লগইন তথ্য যাচাই / Verify Current Credentials
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                        বর্তমান লগইন তথ্য যাচাই / Verify Current Credentials
+                      </div>
+                      <span className="text-[11px] text-amber-300/80">বর্তমান ইউজার: <strong>{AuthService.getStoredUsername()}</strong></span>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2367,7 +3059,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </label>
                         <input
                           type="text"
-                          placeholder="বর্তমান ইউজারনেম..."
+                          placeholder="বর্তমান ইউজারনেম (e.g. admin)..."
                           value={currentUsername}
                           onChange={(e) => setCurrentUsername(e.target.value)}
                           className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
@@ -2381,16 +3073,25 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         <label className="block text-xs font-semibold text-slate-300 mb-1">
                           বর্তমান পাসওয়ার্ড / Current Password *
                         </label>
-                        <input
-                          type="password"
-                          placeholder="বর্তমান পাসওয়ার্ড..."
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
-                            darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                          }`}
-                          required
-                        />
+                        <div className="relative">
+                          <input
+                            type={showCurrentPass ? 'text' : 'password'}
+                            placeholder="বর্তমান পাসওয়ার্ড..."
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className={`w-full px-3 py-2 pr-9 rounded-xl text-xs border outline-none ${
+                              darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                            }`}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPass(!showCurrentPass)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                          >
+                            {showCurrentPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2403,11 +3104,11 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold text-slate-300">
-                        নতুন ইউজারনেম / New Username (ঐচ্ছিক / Leave blank to keep current)
+                        নতুন ইউজারনেম / New Username (ঐচ্ছিক / অপরিবর্তিত রাখতে ফাঁকা রাখুন)
                       </label>
                       <input
                         type="text"
-                        placeholder="নতুন ইউজারনেম লিখুন (যেমন: myadmin)..."
+                        placeholder="নতুন ইউজারনেম লিখুন (যেমন: superadmin)..."
                         value={newUsername}
                         onChange={(e) => setNewUsername(e.target.value)}
                         className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
@@ -2421,30 +3122,48 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         <label className="block text-xs font-semibold text-slate-300">
                           নতুন পাসওয়ার্ড / New Password (ঐচ্ছিক)
                         </label>
-                        <input
-                          type="password"
-                          placeholder="কমপক্ষে ৪ অক্ষরের নতুন পাসওয়ার্ড..."
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
+                        <div className="relative">
+                          <input
+                            type={showNewPass ? 'text' : 'password'}
+                            placeholder="কমপক্ষে ৪ অক্ষরের নতুন পাসওয়ার্ড..."
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className={`w-full px-3.5 py-2.5 pr-9 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPass(!showNewPass)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                          >
+                            {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="space-y-1">
                         <label className="block text-xs font-semibold text-slate-300">
                           নতুন পাসওয়ার্ড নিশ্চিতকরণ / Confirm Password
                         </label>
-                        <input
-                          type="password"
-                          placeholder="পুনরায় নতুন পাসওয়ার্ড লিখুন..."
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
+                        <div className="relative">
+                          <input
+                            type={showConfirmPass ? 'text' : 'password'}
+                            placeholder="পুনরায় নতুন পাসওয়ার্ড লিখুন..."
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={`w-full px-3.5 py-2.5 pr-9 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPass(!showConfirmPass)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                          >
+                            {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2478,7 +3197,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       onClick={handleResetCredentials}
                       className="text-xs text-slate-400 hover:text-red-400 hover:underline cursor-pointer"
                     >
-                      ডিফল্ট ক্রেডেনশিয়াল রিসেট (admin / admin123)
+                      ডিফল্ট রিসেট (admin / admin123)
                     </button>
                   </div>
                 </form>
@@ -2526,7 +3245,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {activeTab === 'projects' && (
               <AdminProjectsTab
                 projects={formData.projects || []}
-                onChange={(newProjects) => setFormData({ ...formData, projects: newProjects })}
+                onChange={(newProjects) => {
+                  const updated = { ...formData, projects: newProjects };
+                  setFormData(updated);
+                  CmsService.saveData(updated);
+                  onSave(updated);
+                }}
                 darkMode={darkMode}
               />
             )}
@@ -2535,7 +3259,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {activeTab === 'blogs' && (
               <AdminBlogsTab
                 blogs={formData.blogs || []}
-                onChange={(newBlogs) => setFormData({ ...formData, blogs: newBlogs })}
+                onChange={(newBlogs) => {
+                  const updated = { ...formData, blogs: newBlogs };
+                  setFormData(updated);
+                  CmsService.saveData(updated);
+                  onSave(updated);
+                }}
                 darkMode={darkMode}
               />
             )}

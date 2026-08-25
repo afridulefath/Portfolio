@@ -20,6 +20,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ data, darkMode, onOpenCms, onLogout }) => {
   const { siteSettings, personal, socials } = data;
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => AuthService.isAuthenticated());
+  const [logoError, setLogoError] = useState<boolean>(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -46,13 +47,17 @@ export const Footer: React.FC<FooterProps> = ({ data, darkMode, onOpenCms, onLog
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const customLabels = siteSettings.navCustomLabels || {};
+
   const footerNavLinks = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about' },
-    { label: 'Experience', path: '/experience' },
-    { label: 'Education', path: '/education' },
-    { label: 'Gallery', path: '/gallery' },
-    { label: 'Contact', path: '/contact' },
+    { label: customLabels['home'] || 'Home', path: '/' },
+    { label: customLabels['about'] || 'About', path: '/about' },
+    { label: customLabels['projects'] || 'Projects', path: '/projects' },
+    { label: customLabels['blogs'] || customLabels['blog'] || 'Blog', path: '/blogs' },
+    { label: customLabels['experience'] || 'Experience', path: '/experience' },
+    { label: customLabels['education'] || 'Education', path: '/education' },
+    { label: customLabels['gallery'] || 'Gallery', path: '/gallery' },
+    { label: customLabels['contact'] || 'Contact', path: '/contact' },
   ];
 
   return (
@@ -70,9 +75,21 @@ export const Footer: React.FC<FooterProps> = ({ data, darkMode, onOpenCms, onLog
           {/* Col 1: Brand & Designation */}
           <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left space-y-3">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                {personal.fullName.charAt(0)}
-              </div>
+              {siteSettings.brandLogoUrl && !logoError ? (
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-800/40 border border-slate-700/50 flex items-center justify-center shadow-md shadow-indigo-500/10 group-hover:scale-105 transition-transform duration-200">
+                  <img 
+                    src={siteSettings.brandLogoUrl} 
+                    alt={siteSettings.brandName || personal.fullName}
+                    className="w-full h-full object-contain p-0.5"
+                    onError={() => setLogoError(true)}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                  {(siteSettings.brandName || personal.fullName).charAt(0)}
+                </div>
+              )}
               <span className={`font-bold tracking-tight text-lg ${
                 darkMode ? 'text-white group-hover:text-indigo-400' : 'text-slate-900 group-hover:text-indigo-600'
               }`}>

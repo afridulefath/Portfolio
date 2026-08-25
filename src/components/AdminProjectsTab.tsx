@@ -19,6 +19,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { ProjectItem, ProjectGalleryItem, ProjectTechnology, ProjectMetric } from '../types/portfolio';
+import { ImageUploader } from './ImageUploader';
 
 interface AdminProjectsTabProps {
   projects: ProjectItem[];
@@ -287,27 +288,53 @@ export const AdminProjectsTab: React.FC<AdminProjectsTabProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Thumbnail Image URL</label>
-                  <input
-                    type="text"
+                <div className={`p-4 rounded-2xl border space-y-2.5 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <ImageUploader
+                    label="প্রজেক্ট থাম্বনেইল ছবি / Thumbnail Image"
+                    sublabel="কার্ডে প্রদর্শনের জন্য ডিভাইস থেকে ছবি আপলোড করুন"
                     value={editingProject.thumbnailUrl}
-                    onChange={(e) => setEditingProject({ ...editingProject, thumbnailUrl: e.target.value })}
-                    className={`w-full p-2.5 rounded-xl text-xs border ${
-                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                    }`}
+                    onChange={(url) => setEditingProject({ ...editingProject, thumbnailUrl: url })}
+                    darkMode={darkMode}
+                    aspectRatio="video"
                   />
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      ছবি Alt Text (Google SEO ও স্ক্রিন রিডার)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Enterprise Cloud Platform Dashboard Preview"
+                      value={editingProject.thumbnailAlt || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, thumbnailAlt: e.target.value })}
+                      className={`w-full p-2 rounded-xl text-xs border ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Banner Image URL (Detail View)</label>
-                  <input
-                    type="text"
+                <div className={`p-4 rounded-2xl border space-y-2.5 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <ImageUploader
+                    label="ব্যানার ছবি / Banner Image (Detail View)"
+                    sublabel="ডিটেইল ভিউর হেডারের জন্য ডিভাইস থেকে ছবি আপলোড করুন"
                     value={editingProject.bannerUrl || ''}
-                    onChange={(e) => setEditingProject({ ...editingProject, bannerUrl: e.target.value })}
-                    className={`w-full p-2.5 rounded-xl text-xs border ${
-                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                    }`}
+                    onChange={(url) => setEditingProject({ ...editingProject, bannerUrl: url })}
+                    darkMode={darkMode}
+                    aspectRatio="wide"
                   />
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      ব্যানার Alt Text (Google SEO ও স্ক্রিন রিডার)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. High-throughput Enterprise Platform System Overview"
+                      value={editingProject.bannerAlt || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, bannerAlt: e.target.value })}
+                      className={`w-full p-2 rounded-xl text-xs border ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -690,46 +717,49 @@ export const AdminProjectsTab: React.FC<AdminProjectsTabProps> = ({
                     </div>
 
                     {item.type === 'before_after' ? (
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                         <div>
-                          <label className="block text-[10px] text-slate-400">Before Image URL</label>
-                          <input
-                            type="text"
+                          <ImageUploader
+                            label="পূর্বের ছবি / Before Image"
+                            sublabel="ফাইল আপলোড করুন"
                             value={item.beforeImageUrl || ''}
-                            onChange={(e) => {
+                            onChange={(url) => {
                               const updated = [...editingProject.gallery];
-                              updated[idx].beforeImageUrl = e.target.value;
+                              updated[idx].beforeImageUrl = url;
                               setEditingProject({ ...editingProject, gallery: updated });
                             }}
-                            className="w-full p-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-white"
+                            darkMode={darkMode}
+                            aspectRatio="video"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] text-slate-400">After Image URL</label>
-                          <input
-                            type="text"
+                          <ImageUploader
+                            label="পরের ছবি / After Image"
+                            sublabel="ফাইল আপলোড করুন"
                             value={item.afterImageUrl || ''}
-                            onChange={(e) => {
+                            onChange={(url) => {
                               const updated = [...editingProject.gallery];
-                              updated[idx].afterImageUrl = e.target.value;
+                              updated[idx].afterImageUrl = url;
                               setEditingProject({ ...editingProject, gallery: updated });
                             }}
-                            className="w-full p-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-white"
+                            darkMode={darkMode}
+                            aspectRatio="video"
                           />
                         </div>
                       </div>
                     ) : (
-                      <div>
-                        <label className="block text-[10px] text-slate-400">Image URL</label>
-                        <input
-                          type="text"
+                      <div className="pt-2">
+                        <ImageUploader
+                          label="গ্যালারি ছবি / Project Image"
+                          sublabel="ডিভাইস থেকে ফাইল নির্বাচন করুন বা ড্রপ করুন"
                           value={item.url}
-                          onChange={(e) => {
+                          onChange={(url) => {
                             const updated = [...editingProject.gallery];
-                            updated[idx].url = e.target.value;
+                            updated[idx].url = url;
                             setEditingProject({ ...editingProject, gallery: updated });
                           }}
-                          className="w-full p-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-white"
+                          darkMode={darkMode}
+                          aspectRatio="video"
                         />
                       </div>
                     )}
@@ -807,20 +837,35 @@ export const AdminProjectsTab: React.FC<AdminProjectsTabProps> = ({
           {/* TAB 8: SEO */}
           {activeSection === 'seo' && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold mb-1">SEO Title</label>
-                <input
-                  type="text"
-                  value={editingProject.seoTitle || ''}
-                  onChange={(e) => setEditingProject({ ...editingProject, seoTitle: e.target.value })}
-                  placeholder="Custom Meta Title for search engines"
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1">SEO Title (Search Engine Snippet Title)</label>
+                  <input
+                    type="text"
+                    value={editingProject.seoTitle || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, seoTitle: e.target.value })}
+                    placeholder="e.g. FinTech Architecture Case Study | Alex Vance"
+                    className={`w-full p-2.5 rounded-xl text-xs border ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1">SEO URL Slug (/project/your-slug)</label>
+                  <input
+                    type="text"
+                    value={editingProject.slug}
+                    onChange={(e) => setEditingProject({ ...editingProject, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '-') })}
+                    placeholder="e.g. enterprise-cloud-platform"
+                    className={`w-full p-2.5 rounded-xl text-xs border font-mono ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-indigo-400' : 'bg-slate-50 border-slate-200 text-indigo-600'
+                    }`}
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs font-semibold mb-1">SEO Meta Description</label>
+                <label className="block text-xs font-semibold mb-1">SEO Meta Description (Google Search Result Description)</label>
                 <textarea
                   rows={3}
                   value={editingProject.seoDescription || ''}
@@ -829,6 +874,33 @@ export const AdminProjectsTab: React.FC<AdminProjectsTabProps> = ({
                   className={`w-full p-2.5 rounded-xl text-xs border ${
                     darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
                   }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1">Focus Keywords (কমা দিয়ে আলাদা করুন)</label>
+                <input
+                  type="text"
+                  value={editingProject.seoKeywords?.join(', ') || ''}
+                  onChange={(e) => setEditingProject({
+                    ...editingProject,
+                    seoKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                  })}
+                  placeholder="e.g. Cloud Architecture, Microservices, FinTech, High Availability"
+                  className={`w-full p-2.5 rounded-xl text-xs border ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <ImageUploader
+                  label="সোশ্যাল শেয়ার ইমেজ / Open Graph Share Image"
+                  sublabel="এই প্রজেক্টের লিংক ফেসবুকে বা লিঙ্কডইনে শেয়ার করার সময় যে ছবি প্রিভিউ হবে"
+                  value={editingProject.ogImageUrl || ''}
+                  onChange={(url) => setEditingProject({ ...editingProject, ogImageUrl: url })}
+                  darkMode={darkMode}
+                  aspectRatio="landscape"
                 />
               </div>
             </div>

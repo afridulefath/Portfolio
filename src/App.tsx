@@ -103,11 +103,12 @@ export default function App() {
 
   // ক্লাউড ডাটাবেজ থেকে ডাটা আসার আগে স্ক্রিন লক করে রাখবে, ডেমো ডাটা দেখাতে দেবে না
   if (isLoading) {
+    const loadingMessage = data?.siteSettings?.loadingText || 'Portfolio Loading...';
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-sans">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="tracking-wide text-sm">Loading Portfolio Ecosystem...</p>
+          <p className="tracking-wide text-sm">{loadingMessage}</p>
         </div>
       </div>
     );

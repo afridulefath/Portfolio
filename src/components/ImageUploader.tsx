@@ -23,7 +23,7 @@ interface ImageUploaderProps {
   label?: string;
   sublabel?: string;
   darkMode?: boolean;
-  aspectRatio?: 'square' | 'banner' | 'auto';
+  aspectRatio?: 'square' | 'banner' | 'auto' | 'video' | 'wide' | 'landscape';
   previewHeight?: string;
   placeholder?: string;
   portfolioData?: PortfolioData;
@@ -64,18 +64,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     reader.onload = (event) => {
       const src = event.target?.result as string;
 
-      // If SVG or small image under 400KB, use directly
-      if (file.type === 'image/svg+xml' || file.size < 400 * 1024) {
+      // If SVG vector file, use directly
+      if (file.type === 'image/svg+xml') {
         onChange(src);
         setIsProcessing(false);
         return;
       }
 
-      // Optimize / scale down larger images so localStorage remains performant
+      // Optimize and compress raster images so storage remains fast and never hits quota limits
       const img = new Image();
       img.onload = () => {
-        const maxWidth = 1200;
-        const maxHeight = 1200;
+        const maxWidth = aspectRatio === 'square' ? 600 : 1080;
+        const maxHeight = aspectRatio === 'square' ? 600 : 1080;
         let width = img.width;
         let height = img.height;
 
@@ -91,15 +91,32 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           }
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          onChange(compressedDataUrl);
-        } else {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Try webp first for maximum compression, fallback to jpeg
+            let compressedDataUrl = '';
+            try {
+              compressedDataUrl = canvas.toDataURL('image/webp', 0.80);
+              if (!compressedDataUrl.startsWith('data:image/webp')) {
+                compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+              }
+            } catch {
+              compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+            }
+
+            onChange(compressedDataUrl || src);
+          } else {
+            onChange(src);
+          }
+        } catch {
           onChange(src);
         }
         setIsProcessing(false);

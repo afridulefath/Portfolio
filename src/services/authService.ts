@@ -49,6 +49,15 @@ export class AuthService {
   }
 
   /**
+   * Check if custom credentials have been set that differ from default
+   */
+  public static hasCustomCredentials(): boolean {
+    const user = this.getStoredUsername();
+    const pass = this.getStoredPassword();
+    return user !== DEFAULT_ADMIN_USERNAME || pass !== DEFAULT_ADMIN_PASSWORD;
+  }
+
+  /**
    * Verify username and password to login
    */
   public static login(username: string, password: string): { success: boolean; error?: string } {
@@ -65,16 +74,11 @@ export class AuthService {
     const currentUsername = this.getStoredUsername().trim();
     const currentPassword = this.getStoredPassword();
 
-    // Check custom stored credentials or default fallback
-    const isCustomMatch = 
-      (userClean.toLowerCase() === currentUsername.toLowerCase()) && 
-      (passClean === currentPassword.trim() || password === currentPassword);
-    
-    const isDefaultMatch = 
-      (userClean.toLowerCase() === DEFAULT_ADMIN_USERNAME.toLowerCase()) && 
-      (passClean === DEFAULT_ADMIN_PASSWORD);
+    // Check against active stored credentials
+    const isUserMatch = userClean.toLowerCase() === currentUsername.toLowerCase();
+    const isPassMatch = password === currentPassword || passClean === currentPassword.trim();
 
-    if (isCustomMatch || isDefaultMatch) {
+    if (isUserMatch && isPassMatch) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
         window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
@@ -84,7 +88,7 @@ export class AuthService {
 
     return { 
       success: false, 
-      error: 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! ডিফল্ট ইউজারনেম: "admin", পাসওয়ার্ড: "admin"' 
+      error: 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! / Invalid username or password.' 
     };
   }
 
@@ -117,15 +121,16 @@ export class AuthService {
     const existingUser = this.getStoredUsername();
     const existingPass = this.getStoredPassword();
 
-    // Validate current credentials
-    if (currentUsername.trim() !== existingUser) {
+    // Validate current username (case-insensitive)
+    if (currentUsername.trim().toLowerCase() !== existingUser.trim().toLowerCase()) {
       return { 
         success: false, 
         message: 'বর্তমান ইউজারনেম সঠিক নয়! / Current username is incorrect.' 
       };
     }
 
-    if (currentPassword !== existingPass) {
+    // Validate current password
+    if (currentPassword !== existingPass && currentPassword.trim() !== existingPass.trim()) {
       return { 
         success: false, 
         message: 'বর্তমান পাসওয়ার্ড সঠিক নয়! / Current password is incorrect.' 
@@ -150,7 +155,7 @@ export class AuthService {
           message: 'নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে। / New password must be at least 4 characters.' 
         };
       }
-      if (newPassword !== confirmPassword) {
+      if (newPassword !== confirmPassword && newPassword.trim() !== (confirmPassword || '').trim()) {
         return { 
           success: false, 
           message: 'নতুন পাসওয়ার্ড দুটি মিলছে না! / New passwords do not match.' 
@@ -164,11 +169,12 @@ export class AuthService {
       localStorage.setItem(ADMIN_PASSWORD_KEY, targetPassword);
       sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
       window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
+      window.dispatchEvent(new CustomEvent('portfolio_credentials_updated', { detail: { username: targetUsername } }));
     }
 
     return { 
       success: true, 
-      message: 'ইউজারনেম ও পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে! / Credentials updated successfully!' 
+      message: 'ইউজারনেম ও পাসওয়ার্ড সফলভাবে আপডেট ও সেভ হয়েছে! / Credentials updated and saved successfully!' 
     };
   }
 
@@ -180,6 +186,8 @@ export class AuthService {
       localStorage.setItem(ADMIN_USERNAME_KEY, DEFAULT_ADMIN_USERNAME);
       localStorage.setItem(ADMIN_PASSWORD_KEY, DEFAULT_ADMIN_PASSWORD);
       sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
+      window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
+      window.dispatchEvent(new CustomEvent('portfolio_credentials_updated', { detail: { username: DEFAULT_ADMIN_USERNAME } }));
     }
   }
 }
