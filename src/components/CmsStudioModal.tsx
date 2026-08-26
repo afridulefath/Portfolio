@@ -478,6 +478,82 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   />
                 </div>
 
+                {/* Hero Badges & Header Texts Customization */}
+                <div className={`p-5 rounded-2xl border space-y-4 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div>
+                    <h4 className="text-sm font-bold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                      <span>Hero Header Badges / হিরো সেকশনের ব্যাজসমূহ</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      হোমপেজের একদম উপরে প্রদর্শিত সবুজ অ্যাভেইল্যাবিলিটি ব্যাজ এবং স্পার্কল সাব-টাইটেল টেক্সট নিয়ন্ত্রণ করুন।
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                        <span>Availability Badge Text / এভেইল্যাবিলিটি স্ট্যাটাস (সবুজ ব্যাজ)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. AVAILABLE FOR EXECUTIVE & TECH OPPORTUNITIES"
+                        value={formData.personal.availabilityStatus || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          personal: { ...formData.personal, availabilityStatus: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-emerald-500' : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Hero Role Badge / সাব-টাইটেল (স্পার্কল টেক্সট)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. EXECUTIVE & TECHNOLOGY LEADER"
+                        value={formData.personal.heroBadgeTitle || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          personal: { ...formData.personal, heroBadgeTitle: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-indigo-500' : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/40">
+                    <span className="text-xs text-slate-400">
+                      হোমপেজে সবুজ অ্যাভেইল্যাবিলিটি ব্যাজ প্রদর্শন করুন:
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.siteSettings?.showAvailabilityBadge !== false}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          siteSettings: {
+                            ...formData.siteSettings,
+                            showAvailabilityBadge: e.target.checked
+                          }
+                        })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold mb-1">Full Name *</label>
@@ -2944,19 +3020,42 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Footer Copyright Text / ফুটার কপিরাইট</label>
-                  <input
-                    type="text"
-                    value={formData.siteSettings.footerText}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      siteSettings: { ...formData.siteSettings, footerText: e.target.value }
-                    })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Footer Copyright Text / ফুটার কপিরাইট</label>
+                    <input
+                      type="text"
+                      value={formData.siteSettings.footerText}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        siteSettings: { ...formData.siteSettings, footerText: e.target.value }
+                      })}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">
+                      Initial Site Loading Text / সাইট লোডিং মেসেজ
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Portfolio Loading... বা লোড হচ্ছে..."
+                      value={formData.siteSettings.loadingText || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        siteSettings: { ...formData.siteSettings, loadingText: e.target.value }
+                      })}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-indigo-500' : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500'
+                      }`}
+                    />
+                    <span className="block text-[11px] text-slate-400 mt-1">
+                      সাইট প্রথমবার ওপেন হওয়ার সময় এই লেখাটি স্পিনারের সাথে প্রদর্শিত হবে।
+                    </span>
+                  </div>
                 </div>
 
                 {/* Dynamic Navbar Menu Labels Customizer */}

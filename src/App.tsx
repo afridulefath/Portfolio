@@ -104,11 +104,37 @@ export default function App() {
   // ক্লাউড ডাটাবেজ থেকে ডাটা আসার আগে স্ক্রিন লক করে রাখবে, ডেমো ডাটা দেখাতে দেবে না
   if (isLoading) {
     const loadingMessage = data?.siteSettings?.loadingText || 'Portfolio Loading...';
+    const brandName = data?.siteSettings?.brandName || 'Portfolio';
+    const brandLogo = data?.siteSettings?.brandLogoUrl;
+
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-sans">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="tracking-wide text-sm">{loadingMessage}</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300 font-sans p-6">
+        <div className="relative flex flex-col items-center max-w-sm text-center">
+          {/* Subtle Ambient Glow */}
+          <div className="absolute -inset-8 bg-indigo-600/10 blur-2xl rounded-full pointer-events-none" />
+
+          {brandLogo ? (
+            <div className="relative mb-5">
+              <img 
+                src={brandLogo} 
+                alt={brandName} 
+                className="w-14 h-14 rounded-2xl object-cover shadow-lg border border-slate-800"
+              />
+              <div className="absolute -inset-1 border-2 border-indigo-500 border-t-transparent rounded-2xl animate-spin" />
+            </div>
+          ) : (
+            <div className="relative w-12 h-12 mb-5 flex items-center justify-center">
+              <div className="w-12 h-12 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+              <div className="absolute w-6 h-6 border-2 border-sky-400/30 border-b-sky-400 rounded-full animate-spin" style={{ animationDirection: 'reverse' }}></div>
+            </div>
+          )}
+
+          <h2 className="text-base font-semibold text-white tracking-wide mb-1.5">
+            {brandName}
+          </h2>
+          <p className="tracking-wide text-xs sm:text-sm text-slate-400 animate-pulse">
+            {loadingMessage}
+          </p>
         </div>
       </div>
     );

@@ -117,7 +117,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, darkMode }) => {
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
                 <span className={darkMode ? 'text-white' : 'text-slate-900'}>
-                  {personal.headline}
+                  {personal.headline || personal.designation}
                 </span>
               </h1>
             </div>
@@ -126,7 +126,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, darkMode }) => {
             <p className={`text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed ${
               darkMode ? 'text-slate-300' : 'text-slate-600'
             }`}>
-              {personal.subHeadline}
+              {personal.subHeadline || personal.tagline || personal.shortBio}
             </p>
 
             {/* Location & Quick Meta */}
