@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ProjectItem, ProjectGalleryItem, ProjectTechnology, ProjectMetric } from '../types/portfolio';
 import { ImageUploader } from './ImageUploader';
+import { TagInput } from './TagInput';
 
 interface AdminProjectsTabProps {
   projects: ProjectItem[];
@@ -878,18 +879,18 @@ export const AdminProjectsTab: React.FC<AdminProjectsTabProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1">Focus Keywords (কমা দিয়ে আলাদা করুন)</label>
-                <input
-                  type="text"
-                  value={editingProject.seoKeywords?.join(', ') || ''}
-                  onChange={(e) => setEditingProject({
+                <TagInput
+                  label="Focus Keywords / এসইও কি-ওয়ার্ডসমূহ"
+                  sublabel="একটি কি-ওয়ার্ড লিখে 'যোগ করুন' বা Enter চাপুন"
+                  placeholder="e.g. Cloud Architecture, Microservices, FinTech..."
+                  items={editingProject.seoKeywords || []}
+                  onChange={(newKeywords) => setEditingProject({
                     ...editingProject,
-                    seoKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                    seoKeywords: newKeywords,
                   })}
-                  placeholder="e.g. Cloud Architecture, Microservices, FinTech, High Availability"
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  darkMode={darkMode}
+                  colorScheme="indigo"
+                  suggestions={['Cloud Architecture', 'Microservices', 'High Availability', 'Full-Stack', 'Distributed Systems', 'DevOps', 'Security']}
                 />
               </div>
 

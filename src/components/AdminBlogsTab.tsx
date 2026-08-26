@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BlogPost, BlogImage } from '../types/portfolio';
 import { ImageUploader } from './ImageUploader';
+import { TagInput } from './TagInput';
 
 interface AdminBlogsTabProps {
   blogs: BlogPost[];
@@ -404,17 +405,18 @@ Summarize key takeaways for readers.`,
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1">Tags (Comma-separated)</label>
-                <input
-                  type="text"
-                  value={(editingBlog.tags || []).join(', ')}
-                  onChange={(e) => setEditingBlog({
+                <TagInput
+                  label="Tags / ট্যাগসমূহ"
+                  sublabel="একটি ট্যাগ লিখে 'যোগ করুন' বা Enter চাপুন"
+                  placeholder="e.g. Cloud, Architecture, System Design, DevOps..."
+                  items={editingBlog.tags || []}
+                  onChange={(newTags) => setEditingBlog({
                     ...editingBlog,
-                    tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean),
+                    tags: newTags,
                   })}
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  darkMode={darkMode}
+                  colorScheme="indigo"
+                  suggestions={['Cloud', 'Architecture', 'System Design', 'DevOps', 'Microservices', 'TypeScript', 'Kubernetes', 'AI/ML']}
                 />
               </div>
 
@@ -590,18 +592,18 @@ Summarize key takeaways for readers.`,
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1">Focus Keywords (কমা দিয়ে আলাদা করুন)</label>
-                <input
-                  type="text"
-                  value={editingBlog.seoKeywords?.join(', ') || ''}
-                  onChange={(e) => setEditingBlog({
+                <TagInput
+                  label="Focus Keywords / এসইও কি-ওয়ার্ডসমূহ"
+                  sublabel="একটি কি-ওয়ার্ড লিখে 'যোগ করুন' বা Enter চাপুন"
+                  placeholder="e.g. Cloud, Microservices, Event-Driven..."
+                  items={editingBlog.seoKeywords || []}
+                  onChange={(newKeywords) => setEditingBlog({
                     ...editingBlog,
-                    seoKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                    seoKeywords: newKeywords,
                   })}
-                  placeholder="e.g. Cloud, Microservices, Event-Driven, System Architecture"
-                  className={`w-full p-2.5 rounded-xl text-xs border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  darkMode={darkMode}
+                  colorScheme="emerald"
+                  suggestions={['Cloud Computing', 'Microservices', 'System Design', 'High Performance', 'Software Architecture', 'Scalability']}
                 />
               </div>
 

@@ -77,6 +77,7 @@ import { AnalyticsDashboardTab } from './AnalyticsDashboardTab';
 import { AdminProjectsTab } from './AdminProjectsTab';
 import { AdminBlogsTab } from './AdminBlogsTab';
 import { MediaLibraryTab } from './media/MediaLibraryTab';
+import { TagInput } from './TagInput';
 import { 
   generateSitemapXml, 
   generateRobotsTxt, 
@@ -1250,21 +1251,21 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Tech stack comma separated */}
+                      {/* Tech stack tags */}
                       <div>
-                        <label className="block text-xs font-semibold mb-1">Technologies (comma-separated)</label>
-                        <input
-                          type="text"
-                          placeholder="TypeScript, React, Node.js, AWS"
-                          value={exp.technologies?.join(', ') || ''}
-                          onChange={(e) => {
+                        <TagInput
+                          label="Technologies & Tools Used / প্রযুক্তিসমূহ"
+                          sublabel="প্রযুক্তি বা টুলটির নাম লিখে 'যোগ করুন' বা Enter চাপুন"
+                          placeholder="e.g. TypeScript, React, Next.js, Node.js, AWS..."
+                          items={exp.technologies || []}
+                          onChange={(newTechs) => {
                             const updated = [...formData.experiences];
-                            updated[idx].technologies = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                            updated[idx].technologies = newTechs;
                             setFormData({ ...formData, experiences: updated });
                           }}
-                          className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
+                          darkMode={darkMode}
+                          colorScheme="indigo"
+                          suggestions={['TypeScript', 'React', 'Node.js', 'Next.js', 'Python', 'AWS', 'Docker', 'PostgreSQL', 'Tailwind CSS', 'GraphQL']}
                         />
                       </div>
                     </div>
@@ -1329,91 +1330,141 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          placeholder="Degree Name"
-                          value={edu.degree}
-                          onChange={(e) => {
-                            const updated = [...formData.education];
-                            updated[idx].degree = e.target.value;
-                            setFormData({ ...formData, education: updated });
-                          }}
-                          className={`px-3 py-2 rounded-xl text-sm border ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Institution Name"
-                          value={edu.institution}
-                          onChange={(e) => {
-                            const updated = [...formData.education];
-                            updated[idx].institution = e.target.value;
-                            setFormData({ ...formData, education: updated });
-                          }}
-                          className={`px-3 py-2 rounded-xl text-sm border ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          placeholder="Field of Study"
-                          value={edu.fieldOfStudy}
-                          onChange={(e) => {
-                            const updated = [...formData.education];
-                            updated[idx].fieldOfStudy = e.target.value;
-                            setFormData({ ...formData, education: updated });
-                          }}
-                          className={`px-3 py-2 rounded-xl text-sm border ${
-                            darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                          }`}
-                        />
-                        <div className="flex items-center gap-2">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Degree Name</label>
                           <input
                             type="text"
-                            placeholder="Start Year"
-                            value={edu.startYear}
+                            placeholder="e.g. Bachelor of Science in Computer Science"
+                            value={edu.degree}
                             onChange={(e) => {
                               const updated = [...formData.education];
-                              updated[idx].startYear = e.target.value;
+                              updated[idx].degree = e.target.value;
                               setFormData({ ...formData, education: updated });
                             }}
-                            className={`w-1/2 px-3 py-2 rounded-xl text-sm border ${
-                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
                           />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Institution / University</label>
                           <input
                             type="text"
-                            placeholder="End Year"
-                            value={edu.endYear}
+                            placeholder="e.g. University of California, Berkeley"
+                            value={edu.institution}
                             onChange={(e) => {
                               const updated = [...formData.education];
-                              updated[idx].endYear = e.target.value;
+                              updated[idx].institution = e.target.value;
                               setFormData({ ...formData, education: updated });
                             }}
-                            className={`w-1/2 px-3 py-2 rounded-xl text-sm border ${
-                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
                           />
                         </div>
                       </div>
 
-                      <textarea
-                        rows={2}
-                        placeholder="Academic achievements or description"
-                        value={edu.description}
-                        onChange={(e) => {
-                          const updated = [...formData.education];
-                          updated[idx].description = e.target.value;
-                          setFormData({ ...formData, education: updated });
-                        }}
-                        className={`w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none ${
-                          darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                        }`}
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Field of Study</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Software Engineering"
+                            value={edu.fieldOfStudy}
+                            onChange={(e) => {
+                              const updated = [...formData.education];
+                              updated[idx].fieldOfStudy = e.target.value;
+                              setFormData({ ...formData, education: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Duration (Start – End)</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              placeholder="Start (2016)"
+                              value={edu.startYear}
+                              onChange={(e) => {
+                                const updated = [...formData.education];
+                                updated[idx].startYear = e.target.value;
+                                setFormData({ ...formData, education: updated });
+                              }}
+                              className={`w-1/2 px-3 py-2 rounded-xl text-sm border outline-none ${
+                                darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
+                              }`}
+                            />
+                            <input
+                              type="text"
+                              placeholder="End (2020)"
+                              value={edu.endYear}
+                              onChange={(e) => {
+                                const updated = [...formData.education];
+                                updated[idx].endYear = e.target.value;
+                                setFormData({ ...formData, education: updated });
+                              }}
+                              className={`w-1/2 px-3 py-2 rounded-xl text-sm border outline-none ${
+                                darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">
+                            GPA / CGPA / Grade <span className="text-slate-500 font-normal">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 3.90 / 4.00, First Class, etc."
+                            value={edu.grade || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.education];
+                              updated[idx].grade = e.target.value;
+                              setFormData({ ...formData, education: updated });
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
+                              darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <TagInput
+                          label="Honors & Distinctions / সম্মাননা ও অ্যাওয়ার্ড"
+                          sublabel="অনার্স বা ডিসটিংশনের নাম লিখে 'যোগ করুন' বা Enter চাপুন"
+                          placeholder="e.g. Magna Cum Laude, Dean's List, Merit Scholar..."
+                          items={edu.honors || []}
+                          onChange={(newHonors) => {
+                            const updated = [...formData.education];
+                            updated[idx].honors = newHonors;
+                            setFormData({ ...formData, education: updated });
+                          }}
+                          darkMode={darkMode}
+                          colorScheme="amber"
+                          suggestions={["Dean's List", "Magna Cum Laude", "Summa Cum Laude", "First Class First", "Merit Scholarship", "Valedictorian"]}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1">Academic Achievements / Description</label>
+                        <textarea
+                          rows={2}
+                          placeholder="Key coursework, thesis, research, leadership, or academic achievements..."
+                          value={edu.description}
+                          onChange={(e) => {
+                            const updated = [...formData.education];
+                            updated[idx].description = e.target.value;
+                            setFormData({ ...formData, education: updated });
+                          }}
+                          className={`w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none ${
+                            darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
+                          }`}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1864,19 +1915,19 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold mb-1">Tags / ট্যাগসমূহ (কমা দিয়ে আলাদা করুন)</label>
-                          <input
-                            type="text"
-                            placeholder="Tech, Architecture, Event"
-                            value={item.tags?.join(', ') || ''}
-                            onChange={(e) => {
+                          <TagInput
+                            label="Tags / ট্যাগসমূহ"
+                            sublabel="ট্যাগ লিখে 'যোগ করুন' বা Enter চাপুন"
+                            placeholder="Tech, Architecture, Event..."
+                            items={item.tags || []}
+                            onChange={(newTags) => {
                               const updated = [...formData.gallery];
-                              updated[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              updated[idx].tags = newTags;
                               setFormData({ ...formData, gallery: updated });
                             }}
-                            className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
-                              darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                            }`}
+                            darkMode={darkMode}
+                            colorScheme="purple"
+                            suggestions={['Architecture', 'Tech', 'Event', 'Team', 'Design', 'Award', 'Conference']}
                           />
                         </div>
                       </div>
@@ -2420,24 +2471,21 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold mb-1.5">
-                          Focus Keywords (কমা দিয়ে আলাদা করুন)
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.seo.keywords?.join(', ') || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            seo: { ...formData.seo, keywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
-                          })}
-                          placeholder="Solutions Architect, Staff Engineer, TypeScript, Cloud"
-                          className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                            darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                          }`}
+                        <TagInput
+                          label="Focus Keywords / এসইও কি-ওয়ার্ডসমূহ"
+                          sublabel="একটি কি-ওয়ার্ড লিখে 'যোগ করুন' বা Enter চাপুন"
+                          placeholder="Solutions Architect, Staff Engineer, TypeScript, Cloud..."
+                          items={formData.seo.keywords || []}
+                          onChange={(newKeywords) => {
+                            setFormData({
+                              ...formData,
+                              seo: { ...formData.seo, keywords: newKeywords }
+                            });
+                          }}
+                          darkMode={darkMode}
+                          colorScheme="emerald"
+                          suggestions={['Full-Stack Engineer', 'Solutions Architect', 'Cloud Architecture', 'React & TypeScript', 'System Design', 'DevOps']}
                         />
-                        <span className="block text-[11px] text-slate-400 mt-1">
-                          {formData.seo.keywords?.length || 0} টি কি-ওয়ার্ড যুক্ত করা হয়েছে।
-                        </span>
                       </div>
                     </div>
 
