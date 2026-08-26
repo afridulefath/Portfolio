@@ -160,6 +160,8 @@ export interface SiteSettings {
   enableConfetti: boolean;
   showAvailabilityBadge: boolean;
   loadingText?: string;
+  adminUsername?: string;
+  adminPassword?: string;
   navCustomLabels?: Record<string, string>; // e.g. { home: "হোম", about: "আমার সম্পর্কে", projects: "প্রজেক্টসমূহ", blogs: "ব্লগ ও আর্টিকেল", experience: "অভিজ্ঞতা", education: "শিক্ষা", gallery: "গ্যালারি", contact: "যোগাযোগ" }
   navLinksConfig?: Array<{
     id: string;

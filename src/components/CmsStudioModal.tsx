@@ -231,7 +231,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
     const result = AuthService.updateCredentials({
       currentUsername: currentUsername || AuthService.getStoredUsername(),
-      currentPassword,
+      currentPassword: currentPassword || undefined,
       newUsername: newUsername.trim() ? newUsername.trim() : undefined,
       newPassword: newPassword.trim() ? newPassword.trim() : undefined,
       confirmPassword,
@@ -244,20 +244,41 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
       setConfirmPassword('');
       setCurrentUsername(AuthService.getStoredUsername());
       setNewUsername('');
+
+      // Update formData and persist to Supabase & localStorage
+      const updatedSiteSettings = {
+        ...formData.siteSettings,
+        adminUsername: AuthService.getStoredUsername(),
+        adminPassword: AuthService.getStoredPassword(),
+      };
+      const updatedData = { ...formData, siteSettings: updatedSiteSettings };
+      setFormData(updatedData);
+      CmsService.saveData(updatedData);
+      onSave(updatedData);
     } else {
       setPasswordStatus({ type: 'error', text: result.message });
     }
   };
 
   const handleResetCredentials = () => {
-    if (confirm('ইউজারনেম "admin" এবং পাসওয়ার্ড "admin123" এ রিসেট করতে চান? / Reset credentials to default (admin / admin123)?')) {
+    if (confirm('ইউজারনেম "admin" এবং পাসওয়ার্ড "admin" এ রিসেট করতে চান? / Reset credentials to default (admin / admin)?')) {
       AuthService.resetCredentialsToDefault();
       setCurrentUsername('admin');
       setNewUsername('');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setPasswordStatus({ type: 'success', text: 'ডিফল্ট রিসেট সম্পন্ন: admin / admin123' });
+      setPasswordStatus({ type: 'success', text: 'ডিফল্ট রিসেট সম্পন্ন: admin / admin' });
+
+      const updatedSiteSettings = {
+        ...formData.siteSettings,
+        adminUsername: 'admin',
+        adminPassword: 'admin',
+      };
+      const updatedData = { ...formData, siteSettings: updatedSiteSettings };
+      setFormData(updatedData);
+      CmsService.saveData(updatedData);
+      onSave(updatedData);
     }
   };
 
@@ -3197,7 +3218,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       onClick={handleResetCredentials}
                       className="text-xs text-slate-400 hover:text-red-400 hover:underline cursor-pointer"
                     >
-                      ডিফল্ট রিসেট (admin / admin123)
+                      ডিফল্ট রিসেট (admin / admin)
                     </button>
                   </div>
                 </form>

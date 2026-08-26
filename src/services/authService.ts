@@ -17,7 +17,17 @@ export class AuthService {
     if (typeof window === 'undefined') return DEFAULT_ADMIN_USERNAME;
     try {
       const stored = localStorage.getItem(ADMIN_USERNAME_KEY);
-      return stored && stored.trim() ? stored.trim() : DEFAULT_ADMIN_USERNAME;
+      if (stored && stored.trim()) {
+        return stored.trim();
+      }
+      const portfolioRaw = localStorage.getItem('DYNAMIC_PORTFOLIO_DATA_V1');
+      if (portfolioRaw) {
+        const parsed = JSON.parse(portfolioRaw);
+        if (parsed?.siteSettings?.adminUsername) {
+          return parsed.siteSettings.adminUsername.trim();
+        }
+      }
+      return DEFAULT_ADMIN_USERNAME;
     } catch {
       return DEFAULT_ADMIN_USERNAME;
     }
@@ -30,7 +40,17 @@ export class AuthService {
     if (typeof window === 'undefined') return DEFAULT_ADMIN_PASSWORD;
     try {
       const stored = localStorage.getItem(ADMIN_PASSWORD_KEY);
-      return stored || DEFAULT_ADMIN_PASSWORD;
+      if (stored && stored.trim()) {
+        return stored.trim();
+      }
+      const portfolioRaw = localStorage.getItem('DYNAMIC_PORTFOLIO_DATA_V1');
+      if (portfolioRaw) {
+        const parsed = JSON.parse(portfolioRaw);
+        if (parsed?.siteSettings?.adminPassword) {
+          return parsed.siteSettings.adminPassword.trim();
+        }
+      }
+      return DEFAULT_ADMIN_PASSWORD;
     } catch {
       return DEFAULT_ADMIN_PASSWORD;
     }
@@ -72,11 +92,11 @@ export class AuthService {
     }
 
     const currentUsername = this.getStoredUsername().trim();
-    const currentPassword = this.getStoredPassword();
+    const currentPassword = this.getStoredPassword().trim();
 
-    // Check against active stored credentials
+    // Check strictly against active stored credentials
     const isUserMatch = userClean.toLowerCase() === currentUsername.toLowerCase();
-    const isPassMatch = password === currentPassword || passClean === currentPassword.trim();
+    const isPassMatch = passClean === currentPassword;
 
     if (isUserMatch && isPassMatch) {
       if (typeof window !== 'undefined') {
@@ -112,38 +132,43 @@ export class AuthService {
     newPassword,
     confirmPassword,
   }: {
-    currentUsername: string;
-    currentPassword: string;
+    currentUsername?: string;
+    currentPassword?: string;
     newUsername?: string;
     newPassword?: string;
     confirmPassword?: string;
   }): { success: boolean; message: string } {
-    const existingUser = this.getStoredUsername();
-    const existingPass = this.getStoredPassword();
+    const existingUser = this.getStoredUsername().trim();
+    const existingPass = this.getStoredPassword().trim();
 
-    // Validate current username (case-insensitive)
-    if (currentUsername.trim().toLowerCase() !== existingUser.trim().toLowerCase()) {
-      return { 
-        success: false, 
-        message: 'বর্তমান ইউজারনেম সঠিক নয়! / Current username is incorrect.' 
-      };
+    // If current password provided, verify it strictly
+    if (currentPassword && currentPassword.trim()) {
+      if (currentPassword.trim() !== existingPass) {
+        return { 
+          success: false, 
+          message: 'বর্তমান পাসওয়ার্ড সঠিক নয়! / Current password does not match.' 
+        };
+      }
     }
 
-    // Validate current password
-    if (currentPassword !== existingPass && currentPassword.trim() !== existingPass.trim()) {
-      return { 
-        success: false, 
-        message: 'বর্তমান পাসওয়ার্ড সঠিক নয়! / Current password is incorrect.' 
+    // Must provide either new username or new password
+    if ((!newUsername || !newUsername.trim()) && (!newPassword || !newPassword.trim())) {
+      return {
+        success: false,
+        message: 'নতুন ইউজারনেম অথবা নতুন পাসওয়ার্ড লিখুন। / Please enter a new username or password.',
       };
     }
 
     // Check if updating username
-    const targetUsername = newUsername && newUsername.trim() ? newUsername.trim() : existingUser;
-    if (newUsername && newUsername.trim().length < 3) {
-      return {
-        success: false,
-        message: 'নতুন ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে। / Username must be at least 3 characters.',
-      };
+    let targetUsername = existingUser;
+    if (newUsername && newUsername.trim()) {
+      if (newUsername.trim().length < 3) {
+        return {
+          success: false,
+          message: 'নতুন ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে। / Username must be at least 3 characters.',
+        };
+      }
+      targetUsername = newUsername.trim();
     }
 
     // Check if updating password
@@ -155,10 +180,10 @@ export class AuthService {
           message: 'নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে। / New password must be at least 4 characters.' 
         };
       }
-      if (newPassword !== confirmPassword && newPassword.trim() !== (confirmPassword || '').trim()) {
+      if (newPassword.trim() !== (confirmPassword || '').trim()) {
         return { 
           success: false, 
-          message: 'নতুন পাসওয়ার্ড দুটি মিলছে না! / New passwords do not match.' 
+          message: 'নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না! / Passwords do not match.' 
         };
       }
       targetPassword = newPassword.trim();
@@ -168,13 +193,29 @@ export class AuthService {
       localStorage.setItem(ADMIN_USERNAME_KEY, targetUsername);
       localStorage.setItem(ADMIN_PASSWORD_KEY, targetPassword);
       sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
+
+      // Update in local cached portfolio data and dispatch events
+      try {
+        const portfolioRaw = localStorage.getItem('DYNAMIC_PORTFOLIO_DATA_V1');
+        if (portfolioRaw) {
+          const parsed = JSON.parse(portfolioRaw);
+          if (!parsed.siteSettings) parsed.siteSettings = {};
+          parsed.siteSettings.adminUsername = targetUsername;
+          parsed.siteSettings.adminPassword = targetPassword;
+          localStorage.setItem('DYNAMIC_PORTFOLIO_DATA_V1', JSON.stringify(parsed));
+          window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: parsed }));
+        }
+      } catch (e) {
+        console.error('Error updating siteSettings credentials:', e);
+      }
+
       window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
       window.dispatchEvent(new CustomEvent('portfolio_credentials_updated', { detail: { username: targetUsername } }));
     }
 
     return { 
       success: true, 
-      message: 'ইউজারনেম ও পাসওয়ার্ড সফলভাবে আপডেট ও সেভ হয়েছে! / Credentials updated and saved successfully!' 
+      message: 'ইউজারনেম ও পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে! আগের পাসওয়ার্ড বাতিল হয়েছে। / Credentials updated successfully. Old password is now deactivated.' 
     };
   }
 
@@ -186,8 +227,25 @@ export class AuthService {
       localStorage.setItem(ADMIN_USERNAME_KEY, DEFAULT_ADMIN_USERNAME);
       localStorage.setItem(ADMIN_PASSWORD_KEY, DEFAULT_ADMIN_PASSWORD);
       sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
+      
+      try {
+        const portfolioRaw = localStorage.getItem('DYNAMIC_PORTFOLIO_DATA_V1');
+        if (portfolioRaw) {
+          const parsed = JSON.parse(portfolioRaw);
+          if (parsed.siteSettings) {
+            delete parsed.siteSettings.adminUsername;
+            delete parsed.siteSettings.adminPassword;
+            localStorage.setItem('DYNAMIC_PORTFOLIO_DATA_V1', JSON.stringify(parsed));
+            window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: parsed }));
+          }
+        }
+      } catch (e) {
+        console.error('Error resetting credentials in portfolio data:', e);
+      }
+
       window.dispatchEvent(new CustomEvent('portfolio_auth_changed', { detail: { authenticated: true } }));
       window.dispatchEvent(new CustomEvent('portfolio_credentials_updated', { detail: { username: DEFAULT_ADMIN_USERNAME } }));
     }
   }
 }
+

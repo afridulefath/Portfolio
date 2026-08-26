@@ -55,8 +55,16 @@ export class CmsService {
   public static async saveData(data: PortfolioData): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
-      const updated = {
+      const currentStoredPass = localStorage.getItem('DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1');
+      const currentStoredUser = localStorage.getItem('DYNAMIC_PORTFOLIO_ADMIN_USERNAME_V1');
+
+      const updated: PortfolioData = {
         ...data,
+        siteSettings: {
+          ...data.siteSettings,
+          adminUsername: currentStoredUser || data.siteSettings.adminUsername,
+          adminPassword: currentStoredPass || data.siteSettings.adminPassword,
+        },
         cmsConfig: {
           ...data.cmsConfig,
           lastSynced: new Date().toISOString(),
@@ -96,6 +104,15 @@ export class CmsService {
         const cloudDataStr = JSON.stringify(data.content);
         if (localStorage.getItem(STORAGE_KEY) !== cloudDataStr) {
           localStorage.setItem(STORAGE_KEY, cloudDataStr);
+
+          // Sync cloud credentials to local auth storage if present
+          if (data.content.siteSettings?.adminPassword) {
+            localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1', data.content.siteSettings.adminPassword);
+          }
+          if (data.content.siteSettings?.adminUsername) {
+            localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_USERNAME_V1', data.content.siteSettings.adminUsername);
+          }
+
           window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: data.content }));
         }
       }
