@@ -20,6 +20,8 @@ export const initialPortfolioData: PortfolioData = {
     heroCtaPrimaryLink: '#contact',
     heroCtaSecondaryText: 'Explore Career & Work',
     heroCtaSecondaryLink: '#experience',
+    availabilityStatus: 'Available for Executive & Tech Opportunities',
+    heroBadgeTitle: 'Executive & Technology Leader',
   },
   about: {
     storyTitle: 'Strategic Vision, Impactful Leadership & Seamless Execution',
@@ -359,6 +361,7 @@ My core belief is that exceptional outcomes are built on clear, empathetic commu
     footerText: '© 2026 Alex Vance. All rights reserved. Crafted with Next.js, React, Tailwind CSS & Sanity.io architecture.',
     enableConfetti: true,
     showAvailabilityBadge: true,
+    loadingText: 'Portfolio Loading...',
   },
   cmsConfig: {
     provider: 'local',

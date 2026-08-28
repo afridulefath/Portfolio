@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { PortfolioData, GalleryItem } from '../types/portfolio';
 import { HeroSection } from '../components/HeroSection';
+import { SeoHead } from '../components/SeoHead';
 
 interface HomePageProps {
   data: PortfolioData;
@@ -43,6 +44,13 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
 
   return (
     <div className="space-y-24 sm:space-y-32 pb-16">
+      {/* Dynamic SEO & Schema Engine */}
+      <SeoHead
+        data={data}
+        canonicalPath="/"
+        breadcrumbs={[{ name: 'Home', url: '/' }]}
+      />
+
       {/* 1. Hero / Intro Area */}
       <HeroSection data={data} darkMode={darkMode} onOpenCms={onOpenCms} />
 

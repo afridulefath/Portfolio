@@ -90,7 +90,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data, darkMode }
               <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
                 <img
                   src={item.imageUrl}
-                  alt={item.title}
+                  alt={item.alt || item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
                   loading="lazy"

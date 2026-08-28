@@ -113,11 +113,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, darkMode }) => {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-indigo-500">
                 <Sparkles className="w-4 h-4" />
-                <span>Executive & Technology Leader</span>
+                <span>{personal.heroBadgeTitle || 'Executive & Technology Leader'}</span>
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
                 <span className={darkMode ? 'text-white' : 'text-slate-900'}>
-                  {personal.headline}
+                  {personal.headline || personal.designation}
                 </span>
               </h1>
             </div>
@@ -126,7 +126,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ data, darkMode }) => {
             <p className={`text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed ${
               darkMode ? 'text-slate-300' : 'text-slate-600'
             }`}>
-              {personal.subHeadline}
+              {personal.subHeadline || personal.tagline || personal.shortBio}
             </p>
 
             {/* Location & Quick Meta */}

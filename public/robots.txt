@@ -1,0 +1,10 @@
+# Googlebot and standard crawler directives
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /dist/
+
+# Host & Sitemap location for Google Search Console
+Host: https://alexvance.dev
+Sitemap: https://alexvance.dev/sitemap.xml

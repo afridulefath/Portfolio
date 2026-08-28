@@ -25,6 +25,7 @@ export interface PersonalInfo {
   subHeadline?: string;
   bio?: string;
   availabilityStatus?: string;
+  heroBadgeTitle?: string;
 }
 
 export interface CorePillarItem {
@@ -54,6 +55,7 @@ export interface ExperienceItem {
   position?: string;
   employmentType: 'Full-time' | 'Contract' | 'Part-time' | 'Remote';
   location: string;
+  address?: string;
   startDate: string;
   endDate: string;
   current: boolean;
@@ -104,6 +106,8 @@ export interface GalleryItem {
   caption: string;
   category: 'Projects' | 'Speaking & Events' | 'Workspaces' | 'Awards & Life';
   imageUrl: string;
+  imageAlt?: string;
+  alt?: string;
   aspectRatio?: 'landscape' | 'portrait' | 'square';
   date?: string;
   tags: string[];
@@ -138,6 +142,12 @@ export interface SeoSettings {
   ogImageUrl: string;
   twitterHandle: string;
   canonicalUrl: string;
+  googleSiteVerification?: string;
+  googleAnalyticsId?: string;
+  googleTagManagerId?: string;
+  siteLanguage?: string;
+  indexFollow?: boolean;
+  structuredDataEnabled?: boolean;
 }
 
 export interface SiteSettings {
@@ -149,6 +159,9 @@ export interface SiteSettings {
   footerText: string;
   enableConfetti: boolean;
   showAvailabilityBadge: boolean;
+  loadingText?: string;
+  adminUsername?: string;
+  adminPassword?: string;
   navCustomLabels?: Record<string, string>; // e.g. { home: "হোম", about: "আমার সম্পর্কে", projects: "প্রজেক্টসমূহ", blogs: "ব্লগ ও আর্টিকেল", experience: "অভিজ্ঞতা", education: "শিক্ষা", gallery: "গ্যালারি", contact: "যোগাযোগ" }
   navLinksConfig?: Array<{
     id: string;
@@ -188,6 +201,7 @@ export interface BlogPost {
   summary: string;
   content: string; // Rich markdown or HTML content
   coverImageUrl: string;
+  coverImageAlt?: string;
   galleryImages?: BlogImage[];
   category: string;
   tags: string[];
@@ -266,7 +280,9 @@ export interface ProjectItem {
   
   // Cover & Visuals
   thumbnailUrl: string;
+  thumbnailAlt?: string;
   bannerUrl?: string;
+  bannerAlt?: string;
   gallery: ProjectGalleryItem[];
   
   // Client

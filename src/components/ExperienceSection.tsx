@@ -126,12 +126,26 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
                             </div>
 
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium">
-                              <span className={darkMode ? 'text-indigo-400 font-semibold' : 'text-indigo-600 font-semibold'}>
-                                {exp.company}
-                              </span>
+                              {exp.companyUrl ? (
+                                <a 
+                                  href={exp.companyUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-1 hover:underline ${
+                                    darkMode ? 'text-indigo-400 font-semibold' : 'text-indigo-600 font-semibold'
+                                  }`}
+                                >
+                                  <span>{exp.company}</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              ) : (
+                                <span className={darkMode ? 'text-indigo-400 font-semibold' : 'text-indigo-600 font-semibold'}>
+                                  {exp.company}
+                                </span>
+                              )}
                               <span className="text-slate-400">•</span>
                               <span className={darkMode ? 'text-slate-400' : 'text-slate-500'}>
-                                {exp.employmentType}
+                                {exp.employmentType || 'Full-time'}
                               </span>
                             </div>
                           </div>
@@ -148,10 +162,12 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
                             <span>{exp.startDate} – {exp.current ? 'Present' : exp.endDate}</span>
                           </div>
 
-                          <div className="inline-flex items-center gap-1 text-slate-400 text-[11px]">
-                            <MapPin className="w-3 h-3" />
-                            <span>{exp.location}</span>
-                          </div>
+                          {(exp.location || exp.address) && (
+                            <div className="inline-flex items-center gap-1 text-slate-400 text-[11px] font-medium">
+                              <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>{exp.location || exp.address}</span>
+                            </div>
+                          )}
                         </div>
 
                       </div>

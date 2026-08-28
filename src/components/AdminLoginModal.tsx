@@ -63,21 +63,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     }, 200);
   };
 
-  const handleUseDefaultCredentials = () => {
-    AuthService.resetCredentialsToDefault();
-    setUsername('admin');
-    setPassword('admin');
-    setError(null);
-  };
-
-  const handleInstantResetAndLogin = () => {
-    AuthService.resetCredentialsToDefault();
-    setUsername('admin');
-    setPassword('admin');
-    setError(null);
-    onSuccess();
-  };
-
   return (
     <div 
       id="admin-login-modal"
@@ -126,7 +111,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               <input
                 type="text"
                 autoFocus
-                placeholder="ইউজারনেম লিখুন (e.g. admin)..."
+                placeholder="ইউজারনেম লিখুন..."
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -174,50 +159,19 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
           </div>
 
-          {/* Error feedback with Recovery Action */}
+          {/* Error feedback - clean error only */}
           {error && (
-            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs space-y-2 animate-fade-in">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-              <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
-                <span className="text-[11px] text-slate-300">লগইন করতে সমস্যা হচ্ছে?</span>
-                <button
-                  type="button"
-                  onClick={handleInstantResetAndLogin}
-                  className="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-white font-semibold text-xs transition-colors cursor-pointer"
-                >
-                  ⚡ সরাসরি আনলক ও রিসেট করুন
-                </button>
-              </div>
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2.5 animate-fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
-
-          {/* Default credentials hint */}
-          <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs ${
-            darkMode ? 'bg-indigo-950/30 border-indigo-500/20 text-slate-300' : 'bg-indigo-50/80 border-indigo-200 text-slate-700'
-          }`}>
-            <div className="space-y-0.5">
-              <p className="font-semibold text-indigo-400">
-                ইউজার: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin</code> | পাস: <code className="px-1.5 py-0.5 rounded bg-indigo-900/60 font-mono text-white">admin</code>
-              </p>
-              <p className="text-[11px] text-slate-400">ড্যাশবোর্ড খোলার পর সিকিউরিটি ট্যাব থেকে দুটোই বদলাতে পারবেন।</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleUseDefaultCredentials}
-              className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 hover:underline shrink-0 cursor-pointer"
-            >
-              স্বয়ংক্রিয় বসান
-            </button>
-          </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer mt-2"
           >
             <ShieldCheck className="w-4 h-4" />
             <span>{loading ? 'যাচাই করা হচ্ছে...' : 'লগইন করুন / Unlock Studio'}</span>
