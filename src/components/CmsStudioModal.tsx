@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Save, 
@@ -138,11 +138,14 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
     return () => window.removeEventListener('portfolio_messages_updated', handleMsgUpdate);
   }, []);
 
-  // Sync form data whenever modal opens or parent data updates
+  const prevIsOpenRef = useRef<boolean>(false);
+
+  // Sync form data ONLY when modal transitions from closed to open
   useEffect(() => {
-    if (isOpen && data) {
-      setFormData(JSON.parse(JSON.stringify(data)));
+    if (isOpen && !prevIsOpenRef.current) {
+      setFormData(JSON.parse(JSON.stringify(data || CmsService.getData())));
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, data]);
 
   // Lock body scroll when modal is open to prevent page jumps
@@ -281,6 +284,142 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
       CmsService.saveData(updatedData);
       onSave(updatedData);
     }
+  };
+
+  // Safe helper updaters for collection arrays (prevents stale closure issues)
+  const updateExperienceItem = (id: string, updater: (item: ExperienceItem) => ExperienceItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      experiences: (prev.experiences || []).map((item) =>
+        item.id === id ? updater(item) : item
+      ),
+    }));
+  };
+
+  const removeExperienceItem = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      experiences: (prev.experiences || []).filter((item) => item.id !== id),
+    }));
+  };
+
+  const addExperienceItem = () => {
+    const newJob: ExperienceItem = {
+      id: `exp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      company: 'New Company Inc.',
+      role: 'Senior Software Engineer',
+      employmentType: 'Full-time',
+      location: 'San Francisco, CA',
+      startDate: '2024',
+      endDate: 'Present',
+      current: true,
+      summary: 'Lead architect directing scalable cloud systems.',
+      responsibilities: ['Architected scalable cloud microservices.'],
+      achievements: ['Decreased system latency by 40%.'],
+      technologies: ['TypeScript', 'Next.js', 'AWS'],
+      logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80',
+    };
+    setFormData((prev) => ({
+      ...prev,
+      experiences: [newJob, ...(prev.experiences || [])],
+    }));
+  };
+
+  const updateEducationItem = (id: string, updater: (item: EducationItem) => EducationItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      education: (prev.education || []).map((item) =>
+        item.id === id ? updater(item) : item
+      ),
+    }));
+  };
+
+  const removeEducationItem = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      education: (prev.education || []).filter((item) => item.id !== id),
+    }));
+  };
+
+  const addEducationItem = () => {
+    const newEdu: EducationItem = {
+      id: `edu-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      degree: 'Bachelor of Science in Software Engineering',
+      institution: 'Top Tier University',
+      fieldOfStudy: 'Computer Science',
+      startYear: '2016',
+      endYear: '2020',
+      grade: '3.9 GPA',
+      description: 'Core studies in algorithms, cloud systems, and discrete mathematics.',
+      honors: ["Dean's List"],
+    };
+    setFormData((prev) => ({
+      ...prev,
+      education: [...(prev.education || []), newEdu],
+    }));
+  };
+
+  const updateCertificateItem = (id: string, updater: (item: CertificateItem) => CertificateItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      certificates: (prev.certificates || []).map((item) =>
+        item.id === id ? updater(item) : item
+      ),
+    }));
+  };
+
+  const removeCertificateItem = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      certificates: (prev.certificates || []).filter((item) => item.id !== id),
+    }));
+  };
+
+  const addCertificateItem = () => {
+    const newCert: CertificateItem = {
+      id: `cert-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      title: 'AWS Certified Solutions Architect',
+      issuer: 'Amazon Web Services',
+      issueDate: '2024',
+      credentialUrl: 'https://aws.amazon.com/verification',
+      badgeUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=200&q=80',
+    };
+    setFormData((prev) => ({
+      ...prev,
+      certificates: [...(prev.certificates || []), newCert],
+    }));
+  };
+
+  const updateGalleryItem = (id: string, updater: (item: GalleryItem) => GalleryItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      gallery: (prev.gallery || []).map((item) =>
+        item.id === id ? updater(item) : item
+      ),
+    }));
+  };
+
+  const removeGalleryItem = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      gallery: (prev.gallery || []).filter((item) => item.id !== id),
+    }));
+  };
+
+  const addGalleryItem = () => {
+    const newPhoto: GalleryItem = {
+      id: `gal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      title: 'New Gallery Snapshot',
+      caption: 'High resolution visual demonstration.',
+      category: 'Projects',
+      imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80',
+      date: '2024',
+      tags: ['Tech', 'Architecture'],
+    };
+    setFormData((prev) => ({
+      ...prev,
+      gallery: [newPhoto, ...(prev.gallery || [])],
+    }));
   };
 
   const handleLogoutAction = () => {
@@ -1051,28 +1190,9 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                     <p className="text-xs text-slate-400">Add, reorder, or update career positions, company logos, and achievements.</p>
                   </div>
                   <button
-                    onClick={() => {
-                      const newJob: ExperienceItem = {
-                        id: `exp-${Date.now()}`,
-                        company: 'New Company Inc.',
-                        role: 'Senior Software Engineer',
-                        employmentType: 'Full-time',
-                        location: 'San Francisco, CA',
-                        startDate: '2024',
-                        endDate: 'Present',
-                        current: true,
-                        summary: 'Lead architect directing scalable cloud systems.',
-                        responsibilities: ['Architected scalable cloud microservices.'],
-                        achievements: ['Decreased system latency by 40%.'],
-                        technologies: ['TypeScript', 'Next.js', 'AWS'],
-                        logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80',
-                      };
-                      setFormData({
-                        ...formData,
-                        experiences: [newJob, ...formData.experiences],
-                      });
-                    }}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                    type="button"
+                    onClick={addExperienceItem}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors shadow-sm"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add New Job</span>
@@ -1090,13 +1210,9 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       <div className="flex items-center justify-between border-b pb-3 border-slate-800/60">
                         <span className="text-xs font-bold text-indigo-500">Position #{idx + 1}</span>
                         <button
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              experiences: formData.experiences.filter(e => e.id !== exp.id),
-                            });
-                          }}
-                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
+                          type="button"
+                          onClick={() => removeExperienceItem(exp.id)}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Delete</span>
@@ -1108,11 +1224,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         label="কোম্পানি লোগো / Company Logo"
                         sublabel="ডিভাইস থেকে কোম্পানি লোগো আপলোড করুন"
                         value={exp.logoUrl || ''}
-                        onChange={(url) => {
-                          const updated = [...formData.experiences];
-                          updated[idx].logoUrl = url;
-                          setFormData({ ...formData, experiences: updated });
-                        }}
+                        onChange={(url) => updateExperienceItem(exp.id, (item) => ({ ...item, logoUrl: url }))}
                         darkMode={darkMode}
                       />
 
@@ -1123,11 +1235,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Google, Acme Inc."
                             value={exp.company}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].company = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, company: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1140,11 +1248,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Senior Software Architect"
                             value={exp.role}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].role = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, role: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1163,11 +1267,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. San Francisco, CA / ঢাকা, বাংলাদেশ / Remote"
                             value={exp.location || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].location = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, location: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1178,11 +1278,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           <label className="block text-xs font-semibold mb-1">Employment Type / চাকুরির ধরন</label>
                           <select
                             value={exp.employmentType || 'Full-time'}
-                            onChange={(e: any) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].employmentType = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e: any) => updateExperienceItem(exp.id, (item) => ({ ...item, employmentType: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1202,11 +1298,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. 2022 / Jan 2022"
                             value={exp.startDate}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].startDate = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, startDate: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1219,11 +1311,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Present / Dec 2024"
                             value={exp.endDate}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].endDate = e.target.value;
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, endDate: e.target.value }))}
                             disabled={exp.current}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               exp.current 
@@ -1239,10 +1327,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             id={`curr-${exp.id}`}
                             checked={exp.current}
                             onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].current = e.target.checked;
-                              if (e.target.checked) updated[idx].endDate = 'Present';
-                              setFormData({ ...formData, experiences: updated });
+                              const isCurr = e.target.checked;
+                              updateExperienceItem(exp.id, (item) => ({
+                                ...item,
+                                current: isCurr,
+                                endDate: isCurr ? 'Present' : item.endDate === 'Present' ? '' : item.endDate
+                              }));
                             }}
                             className="w-4 h-4 text-indigo-600 rounded"
                           />
@@ -1258,11 +1348,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           type="url"
                           placeholder="https://company.com"
                           value={exp.companyUrl || ''}
-                          onChange={(e) => {
-                            const updated = [...formData.experiences];
-                            updated[idx].companyUrl = e.target.value;
-                            setFormData({ ...formData, experiences: updated });
-                          }}
+                          onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, companyUrl: e.target.value }))}
                           className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                           }`}
@@ -1275,11 +1361,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           rows={2}
                           placeholder="কাজের সারসংক্ষেপ বর্ণনা লিখুন..."
                           value={exp.summary}
-                          onChange={(e) => {
-                            const updated = [...formData.experiences];
-                            updated[idx].summary = e.target.value;
-                            setFormData({ ...formData, experiences: updated });
-                          }}
+                          onChange={(e) => updateExperienceItem(exp.id, (item) => ({ ...item, summary: e.target.value }))}
                           className={`w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                           }`}
@@ -1296,11 +1378,10 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             rows={3}
                             placeholder="Architected scalable microservices&#10;Mentored 10+ junior engineers"
                             value={exp.responsibilities?.join('\n') || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].responsibilities = e.target.value.split('\n').filter(Boolean);
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({
+                              ...item,
+                              responsibilities: e.target.value.split('\n').filter(Boolean)
+                            }))}
                             className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1315,11 +1396,10 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             rows={3}
                             placeholder="Reduced cloud cost by 35%&#10;Delivered flagship project 2 weeks ahead"
                             value={exp.achievements?.join('\n') || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.experiences];
-                              updated[idx].achievements = e.target.value.split('\n').filter(Boolean);
-                              setFormData({ ...formData, experiences: updated });
-                            }}
+                            onChange={(e) => updateExperienceItem(exp.id, (item) => ({
+                              ...item,
+                              achievements: e.target.value.split('\n').filter(Boolean)
+                            }))}
                             className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1334,11 +1414,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           sublabel="প্রযুক্তি বা টুলটির নাম লিখে 'যোগ করুন' বা Enter চাপুন"
                           placeholder="e.g. TypeScript, React, Next.js, Node.js, AWS..."
                           items={exp.technologies || []}
-                          onChange={(newTechs) => {
-                            const updated = [...formData.experiences];
-                            updated[idx].technologies = newTechs;
-                            setFormData({ ...formData, experiences: updated });
-                          }}
+                          onChange={(newTechs) => updateExperienceItem(exp.id, (item) => ({ ...item, technologies: newTechs }))}
                           darkMode={darkMode}
                           colorScheme="indigo"
                           suggestions={['TypeScript', 'React', 'Node.js', 'Next.js', 'Python', 'AWS', 'Docker', 'PostgreSQL', 'Tailwind CSS', 'GraphQL']}
@@ -1363,23 +1439,9 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-400">Academic Degrees</h4>
                     <button
-                      onClick={() => {
-                        const newEdu: EducationItem = {
-                          id: `edu-${Date.now()}`,
-                          degree: 'Bachelor of Science in Software Engineering',
-                          institution: 'Top Tier University',
-                          fieldOfStudy: 'Computer Science',
-                          startYear: '2016',
-                          endYear: '2020',
-                          grade: '3.9 GPA',
-                          description: 'Core studies in algorithms, cloud systems, and discrete mathematics.',
-                        };
-                        setFormData({
-                          ...formData,
-                          education: [...formData.education, newEdu],
-                        });
-                      }}
-                      className="flex items-center gap-1 text-xs font-semibold text-indigo-500 cursor-pointer"
+                      type="button"
+                      onClick={addEducationItem}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors shadow-sm"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Degree</span>
@@ -1393,15 +1455,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-400">Degree #{idx + 1}</span>
                         <button
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              education: formData.education.filter(e => e.id !== edu.id),
-                            });
-                          }}
-                          className="text-xs text-red-400 hover:text-red-300 cursor-pointer"
+                          type="button"
+                          onClick={() => removeEducationItem(edu.id)}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </div>
 
@@ -1412,11 +1471,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Bachelor of Science in Computer Science"
                             value={edu.degree}
-                            onChange={(e) => {
-                              const updated = [...formData.education];
-                              updated[idx].degree = e.target.value;
-                              setFormData({ ...formData, education: updated });
-                            }}
+                            onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, degree: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
@@ -1428,11 +1483,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. University of California, Berkeley"
                             value={edu.institution}
-                            onChange={(e) => {
-                              const updated = [...formData.education];
-                              updated[idx].institution = e.target.value;
-                              setFormData({ ...formData, education: updated });
-                            }}
+                            onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, institution: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
@@ -1447,11 +1498,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Software Engineering"
                             value={edu.fieldOfStudy}
-                            onChange={(e) => {
-                              const updated = [...formData.education];
-                              updated[idx].fieldOfStudy = e.target.value;
-                              setFormData({ ...formData, education: updated });
-                            }}
+                            onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, fieldOfStudy: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
@@ -1464,11 +1511,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                               type="text"
                               placeholder="Start (2016)"
                               value={edu.startYear}
-                              onChange={(e) => {
-                                const updated = [...formData.education];
-                                updated[idx].startYear = e.target.value;
-                                setFormData({ ...formData, education: updated });
-                              }}
+                              onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, startYear: e.target.value }))}
                               className={`w-1/2 px-3 py-2 rounded-xl text-sm border outline-none ${
                                 darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                               }`}
@@ -1477,11 +1520,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                               type="text"
                               placeholder="End (2020)"
                               value={edu.endYear}
-                              onChange={(e) => {
-                                const updated = [...formData.education];
-                                updated[idx].endYear = e.target.value;
-                                setFormData({ ...formData, education: updated });
-                              }}
+                              onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, endYear: e.target.value }))}
                               className={`w-1/2 px-3 py-2 rounded-xl text-sm border outline-none ${
                                 darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                               }`}
@@ -1496,11 +1535,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. 3.90 / 4.00, First Class, etc."
                             value={edu.grade || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.education];
-                              updated[idx].grade = e.target.value;
-                              setFormData({ ...formData, education: updated });
-                            }}
+                            onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, grade: e.target.value }))}
                             className={`w-full px-3 py-2 rounded-xl text-sm border outline-none ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                             }`}
@@ -1514,11 +1549,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           sublabel="অনার্স বা ডিসটিংশনের নাম লিখে 'যোগ করুন' বা Enter চাপুন"
                           placeholder="e.g. Magna Cum Laude, Dean's List, Merit Scholar..."
                           items={edu.honors || []}
-                          onChange={(newHonors) => {
-                            const updated = [...formData.education];
-                            updated[idx].honors = newHonors;
-                            setFormData({ ...formData, education: updated });
-                          }}
+                          onChange={(newHonors) => updateEducationItem(edu.id, (item) => ({ ...item, honors: newHonors }))}
                           darkMode={darkMode}
                           colorScheme="amber"
                           suggestions={["Dean's List", "Magna Cum Laude", "Summa Cum Laude", "First Class First", "Merit Scholarship", "Valedictorian"]}
@@ -1531,11 +1562,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           rows={2}
                           placeholder="Key coursework, thesis, research, leadership, or academic achievements..."
                           value={edu.description}
-                          onChange={(e) => {
-                            const updated = [...formData.education];
-                            updated[idx].description = e.target.value;
-                            setFormData({ ...formData, education: updated });
-                          }}
+                          onChange={(e) => updateEducationItem(edu.id, (item) => ({ ...item, description: e.target.value }))}
                           className={`w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500'
                           }`}
@@ -1550,21 +1577,9 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold uppercase tracking-wider text-amber-400">Professional Certifications</h4>
                     <button
-                      onClick={() => {
-                        const newCert: CertificateItem = {
-                          id: `cert-${Date.now()}`,
-                          title: 'AWS Certified Solutions Architect',
-                          issuer: 'Amazon Web Services',
-                          issueDate: '2024',
-                          credentialUrl: 'https://aws.amazon.com/verification',
-                          badgeUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=200&q=80',
-                        };
-                        setFormData({
-                          ...formData,
-                          certificates: [...formData.certificates, newCert],
-                        });
-                      }}
-                      className="flex items-center gap-1 text-xs font-semibold text-amber-500 cursor-pointer"
+                      type="button"
+                      onClick={addCertificateItem}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white cursor-pointer transition-colors shadow-sm"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Certificate</span>
@@ -1578,15 +1593,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-amber-400">Certificate #{idx + 1}</span>
                         <button
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              certificates: formData.certificates.filter(c => c.id !== cert.id),
-                            });
-                          }}
-                          className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
+                          type="button"
+                          onClick={() => removeCertificateItem(cert.id)}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </div>
 
@@ -1595,11 +1607,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         label="সার্টিফিকেট ব্যাজ / Certificate Badge"
                         sublabel="ডিভাইস থেকে ব্যাজ বা সার্টিফিকেট ছবি আপলোড করুন"
                         value={cert.badgeUrl || ''}
-                        onChange={(url) => {
-                          const updated = [...formData.certificates];
-                          updated[idx].badgeUrl = url;
-                          setFormData({ ...formData, certificates: updated });
-                        }}
+                        onChange={(url) => updateCertificateItem(cert.id, (item) => ({ ...item, badgeUrl: url }))}
                         darkMode={darkMode}
                       />
 
@@ -1608,11 +1616,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           type="text"
                           placeholder="Certification Title"
                           value={cert.title}
-                          onChange={(e) => {
-                            const updated = [...formData.certificates];
-                            updated[idx].title = e.target.value;
-                            setFormData({ ...formData, certificates: updated });
-                          }}
+                          onChange={(e) => updateCertificateItem(cert.id, (item) => ({ ...item, title: e.target.value }))}
                           className={`px-3 py-1.5 rounded-lg text-xs border ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                           }`}
@@ -1621,11 +1625,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           type="text"
                           placeholder="Issuer (e.g. AWS)"
                           value={cert.issuer}
-                          onChange={(e) => {
-                            const updated = [...formData.certificates];
-                            updated[idx].issuer = e.target.value;
-                            setFormData({ ...formData, certificates: updated });
-                          }}
+                          onChange={(e) => updateCertificateItem(cert.id, (item) => ({ ...item, issuer: e.target.value }))}
                           className={`px-3 py-1.5 rounded-lg text-xs border ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                           }`}
@@ -1634,11 +1634,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           type="text"
                           placeholder="Verification URL"
                           value={cert.credentialUrl || ''}
-                          onChange={(e) => {
-                            const updated = [...formData.certificates];
-                            updated[idx].credentialUrl = e.target.value;
-                            setFormData({ ...formData, certificates: updated });
-                          }}
+                          onChange={(e) => updateCertificateItem(cert.id, (item) => ({ ...item, credentialUrl: e.target.value }))}
                           className={`px-3 py-1.5 rounded-lg text-xs border ${
                             darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                           }`}
@@ -1878,24 +1874,11 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                     <p className="text-xs text-slate-400">Upload keynote photos, project mockups, workspaces, and awards directly from your device.</p>
                   </div>
                   <button
-                    onClick={() => {
-                      const newPhoto: GalleryItem = {
-                        id: `gal-${Date.now()}`,
-                        title: 'New Gallery Snapshot',
-                        caption: 'High resolution visual demonstration.',
-                        category: 'Projects',
-                        imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80',
-                        date: '2024',
-                        tags: ['Tech', 'Architecture'],
-                      };
-                      setFormData({
-                        ...formData,
-                        gallery: [newPhoto, ...formData.gallery],
-                      });
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white cursor-pointer"
+                    type="button"
+                    onClick={addGalleryItem}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors shadow-sm"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>Add New Item</span>
                   </button>
                 </div>
@@ -1908,15 +1891,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-indigo-400">Photo #{idx + 1}</span>
                         <button
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              gallery: formData.gallery.filter(g => g.id !== item.id),
-                            });
-                          }}
-                          className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
+                          type="button"
+                          onClick={() => removeGalleryItem(item.id)}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
                         </button>
                       </div>
 
@@ -1925,11 +1905,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                         label="গ্যালারি ছবি / Gallery Photo Image"
                         sublabel="ডিভাইস থেকে ফাইল নির্বাচন করুন অথবা ছবি পেস্ট করুন"
                         value={item.imageUrl}
-                        onChange={(url) => {
-                          const updated = [...formData.gallery];
-                          updated[idx].imageUrl = url;
-                          setFormData({ ...formData, gallery: updated });
-                        }}
+                        onChange={(url) => updateGalleryItem(item.id, (photo) => ({ ...photo, imageUrl: url }))}
                         darkMode={darkMode}
                       />
 
@@ -1940,11 +1916,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="Title"
                             value={item.title}
-                            onChange={(e) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].title = e.target.value;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(e) => updateGalleryItem(item.id, (photo) => ({ ...photo, title: e.target.value }))}
                             className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold border ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1955,11 +1927,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                           <label className="block text-xs font-semibold mb-1">Category / ক্যাটাগরি</label>
                           <select
                             value={item.category}
-                            onChange={(e: any) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].category = e.target.value;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(e: any) => updateGalleryItem(item.id, (photo) => ({ ...photo, category: e.target.value }))}
                             className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1979,11 +1947,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. 2024 / Oct 2024 / 12 Dec 2024"
                             value={item.date || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].date = e.target.value;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(e) => updateGalleryItem(item.id, (photo) => ({ ...photo, date: e.target.value }))}
                             className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -1996,11 +1960,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             sublabel="ট্যাগ লিখে 'যোগ করুন' বা Enter চাপুন"
                             placeholder="Tech, Architecture, Event..."
                             items={item.tags || []}
-                            onChange={(newTags) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].tags = newTags;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(newTags) => updateGalleryItem(item.id, (photo) => ({ ...photo, tags: newTags }))}
                             darkMode={darkMode}
                             colorScheme="purple"
                             suggestions={['Architecture', 'Tech', 'Event', 'Team', 'Design', 'Award', 'Conference']}
@@ -2015,11 +1975,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="Caption / Description"
                             value={item.caption}
-                            onChange={(e) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].caption = e.target.value;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(e) => updateGalleryItem(item.id, (photo) => ({ ...photo, caption: e.target.value }))}
                             className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -2031,11 +1987,7 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                             type="text"
                             placeholder="e.g. Alex Vance speaking at Global Tech Conference"
                             value={item.alt || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.gallery];
-                              updated[idx].alt = e.target.value;
-                              setFormData({ ...formData, gallery: updated });
-                            }}
+                            onChange={(e) => updateGalleryItem(item.id, (photo) => ({ ...photo, alt: e.target.value }))}
                             className={`w-full px-3 py-1.5 rounded-lg text-xs border ${
                               darkMode ? 'bg-slate-850 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
                             }`}
@@ -3436,6 +3388,34 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                 darkMode={darkMode}
               />
             )}
+
+            {/* Sticky Bottom Save Action Bar */}
+            <div className={`sticky bottom-0 mt-8 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 p-4 border-t flex flex-wrap items-center justify-between gap-3 backdrop-blur-md z-20 ${
+              darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {saveStatus ? (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 animate-pulse">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{saveStatus}</span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">
+                    💡 পরিবর্তন করার পর &quot;Save &amp; Publish&quot; বাটনে চাপুন।
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-all shadow-md shadow-indigo-600/25 hover:shadow-indigo-600/40"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save &amp; Publish / সংরক্ষণ করুন</span>
+                </button>
+              </div>
+            </div>
 
           </main>
         </div>

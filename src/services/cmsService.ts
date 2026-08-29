@@ -99,8 +99,8 @@ export class CmsService {
         .eq('id', 1)
         .single();
 
-      // সুপাবেসে যদি আসল ডাটা থাকে এবং তা ডেমো ডাটা (Alex Vance) না হয়, তবেই লোকাল মেমোরি আপডেট করবে
-      if (data && data.content && data.content.personal?.fullName !== "Alex Vance") {
+      // সুপাবেসে যদি ভ্যালিড ডাটা থাকে, তবেই লোকাল মেমোরি আপডেট করবে
+      if (data && data.content && typeof data.content === 'object') {
         const cloudDataStr = JSON.stringify(data.content);
         if (localStorage.getItem(STORAGE_KEY) !== cloudDataStr) {
           localStorage.setItem(STORAGE_KEY, cloudDataStr);

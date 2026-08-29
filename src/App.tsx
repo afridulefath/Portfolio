@@ -30,12 +30,11 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  // Supabase থেকে রিয়েল ডাটা ব্যাকগ্রাউন্ডে লোড হওয়া পর্যন্ত ২ সেকেন্ড অপেক্ষা করবে
+  // Supabase থেকে রিয়েল ডাটা ব্যাকগ্রাউন্ডে লোড হওয়া পর্যন্ত সেফটি বাফার
   useEffect(() => {
     const timer = setTimeout(() => {
-      setData(CmsService.getData());
       setIsLoading(false);
-    }, 2000); // ২ সেকেন্ডের সেফটি বাফার
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
