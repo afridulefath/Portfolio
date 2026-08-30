@@ -74,86 +74,100 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data, darkMode }
           ))}
         </div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item, index) => (
-            <div
-              key={item.id}
-              onClick={() => handleOpenLightbox(item)}
-              className={`group relative rounded-3xl overflow-hidden border cursor-pointer transition-all duration-300 hover:-translate-y-1.5 ${
-                darkMode
-                  ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 shadow-lg shadow-black/40'
-                  : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-xl'
-              }`}
-            >
-              {/* Image Container */}
-              <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
-                <img
-                  src={item.imageUrl}
-                  alt={item.alt || item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
+        {/* Gallery Grid or Empty State */}
+        {filteredItems.length === 0 ? (
+          <div className={`max-w-xl mx-auto text-center p-12 rounded-3xl border ${
+            darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-xs'
+          }`}>
+            <Camera className="w-12 h-12 mx-auto mb-4 text-indigo-400 opacity-60" />
+            <h3 className={`text-lg font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              No Media Uploaded
+            </h3>
+            <p className="text-sm leading-relaxed">
+              No gallery images have been added yet. Upload snapshots via CMS Studio.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item, index) => (
+              <div
+                key={item.id}
+                onClick={() => handleOpenLightbox(item)}
+                className={`group relative rounded-3xl overflow-hidden border cursor-pointer transition-all duration-300 hover:-translate-y-1.5 ${
+                  darkMode
+                    ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 shadow-lg shadow-black/40'
+                    : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-xl'
+                }`}
+              >
+                {/* Image Container */}
+                <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.alt || item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
 
-                {/* Category Badge on Image */}
-                <div className="absolute top-3.5 left-3.5 z-10">
-                  <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20">
-                    {item.category}
-                  </span>
-                </div>
+                  {/* Category Badge on Image */}
+                  <div className="absolute top-3.5 left-3.5 z-10">
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20">
+                      {item.category}
+                    </span>
+                  </div>
 
-                {/* Hover Maximize Button */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300 border border-white/30 shadow-lg">
-                    <Maximize2 className="w-5 h-5" />
+                  {/* Hover Maximize Button */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300 border border-white/30 shadow-lg">
+                      <Maximize2 className="w-5 h-5" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Card Meta Content */}
-              <div className="p-5 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className={`text-base font-bold leading-snug group-hover:text-indigo-500 transition-colors ${
-                    darkMode ? 'text-white' : 'text-slate-900'
-                  }`}>
-                    {item.title}
-                  </h3>
-                  {item.date && (
-                    <span className="text-[11px] font-medium text-slate-400 shrink-0">
-                      {item.date}
-                    </span>
-                  )}
-                </div>
-
-                <p className={`text-xs sm:text-sm leading-relaxed line-clamp-2 ${
-                  darkMode ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  {item.caption}
-                </p>
-
-                {/* Tag Pills */}
-                {item.tags && item.tags.length > 0 && (
-                  <div className="pt-2 flex flex-wrap gap-1">
-                    {item.tags.slice(0, 3).map((tag, tIdx) => (
-                      <span
-                        key={tIdx}
-                        className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
-                          darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        #{tag}
+                {/* Card Meta Content */}
+                <div className="p-5 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className={`text-base font-bold leading-snug group-hover:text-indigo-500 transition-colors ${
+                      darkMode ? 'text-white' : 'text-slate-900'
+                    }`}>
+                      {item.title}
+                    </h3>
+                    {item.date && (
+                      <span className="text-[11px] font-medium text-slate-400 shrink-0">
+                        {item.date}
                       </span>
-                    ))}
-                    {item.tags.length > 3 && (
-                      <span className="text-[10px] text-slate-400">+{item.tags.length - 3}</span>
                     )}
                   </div>
-                )}
+
+                  <p className={`text-xs sm:text-sm leading-relaxed line-clamp-2 ${
+                    darkMode ? 'text-slate-400' : 'text-slate-600'
+                  }`}>
+                    {item.caption}
+                  </p>
+
+                  {/* Tag Pills */}
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-1">
+                      {item.tags.slice(0, 3).map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
+                            darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {item.tags.length > 3 && (
+                        <span className="text-[10px] text-slate-400">+{item.tags.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
       </div>
 

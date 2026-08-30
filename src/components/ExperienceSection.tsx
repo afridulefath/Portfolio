@@ -48,24 +48,37 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
           </p>
         </div>
 
-        {/* Timeline Container */}
-        <div className="relative max-w-4xl mx-auto">
-          
-          {/* Vertical Central Line */}
-          <div className={`hidden md:block absolute left-8 top-6 bottom-6 w-0.5 ${
-            darkMode ? 'bg-slate-800' : 'bg-slate-200'
-          }`} />
+        {/* Timeline Container or Empty State */}
+        {experiences.length === 0 ? (
+          <div className={`max-w-xl mx-auto text-center p-12 rounded-3xl border ${
+            darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-sm'
+          }`}>
+            <Briefcase className="w-12 h-12 mx-auto mb-4 text-indigo-400 opacity-60" />
+            <h3 className={`text-lg font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              No Experience Listed
+            </h3>
+            <p className="text-sm leading-relaxed">
+              No career positions have been added yet. Add positions using the CMS Studio.
+            </p>
+          </div>
+        ) : (
+          <div className="relative max-w-4xl mx-auto">
+            
+            {/* Vertical Central Line */}
+            <div className={`hidden md:block absolute left-8 top-6 bottom-6 w-0.5 ${
+              darkMode ? 'bg-slate-800' : 'bg-slate-200'
+            }`} />
 
-          <div className="space-y-8">
-            {experiences.map((exp, index) => {
-              const isExpanded = expandedId === exp.id || expandedId === null; // expanded by default or targeted
+            <div className="space-y-8">
+              {experiences.map((exp, index) => {
+                const isExpanded = expandedId === exp.id || expandedId === null; // expanded by default or targeted
 
-              return (
-                <div 
-                  key={exp.id} 
-                  id={`experience-item-${exp.id}`}
-                  className="relative md:pl-20 transition-all duration-300"
-                >
+                return (
+                  <div 
+                    key={exp.id} 
+                    id={`experience-item-${exp.id}`}
+                    className="relative md:pl-20 transition-all duration-300"
+                  >
                   {/* Timeline Dot with Year Icon */}
                   <div className={`hidden md:flex absolute left-5 top-7 -translate-x-1/2 w-6 h-6 rounded-full border-4 items-center justify-center transition-all ${
                     exp.current
@@ -255,6 +268,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
           </div>
 
         </div>
+        )}
 
       </div>
     </section>

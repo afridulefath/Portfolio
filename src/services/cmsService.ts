@@ -27,21 +27,26 @@ export class CmsService {
             ...initialPortfolioData,
             ...parsed,
             personal: { ...initialPortfolioData.personal, ...(parsed.personal || {}) },
-            about: { ...initialPortfolioData.about, ...(parsed.about || {}) },
+            about: {
+              ...initialPortfolioData.about,
+              ...(parsed.about || {}),
+              highlights: Array.isArray(parsed.about?.highlights) ? parsed.about.highlights : (initialPortfolioData.about.highlights || []),
+              corePillars: Array.isArray(parsed.about?.corePillars) ? parsed.about.corePillars : (initialPortfolioData.about.corePillars || []),
+            },
             contact: { ...initialPortfolioData.contact, ...(parsed.contact || {}) },
             seo: { ...initialPortfolioData.seo, ...(parsed.seo || {}) },
             siteSettings: { ...initialPortfolioData.siteSettings, ...(parsed.siteSettings || {}) },
             cmsConfig: { ...initialPortfolioData.cmsConfig, ...(parsed.cmsConfig || {}) },
-            projects: Array.isArray(parsed.projects) ? parsed.projects : (initialPortfolioData.projects || []),
-            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : (initialPortfolioData.blogs || []),
-            gallery: Array.isArray(parsed.gallery) ? parsed.gallery : initialPortfolioData.gallery,
-            experiences: Array.isArray(parsed.experiences) ? parsed.experiences : initialPortfolioData.experiences,
-            education: Array.isArray(parsed.education) ? parsed.education : initialPortfolioData.education,
-            certificates: Array.isArray(parsed.certificates) ? parsed.certificates : initialPortfolioData.certificates,
-            skills: Array.isArray(parsed.skills) ? parsed.skills : initialPortfolioData.skills,
-            socials: Array.isArray(parsed.socials) ? parsed.socials : initialPortfolioData.socials,
-            mediaLibrary: Array.isArray(parsed.mediaLibrary) ? parsed.mediaLibrary : (initialPortfolioData.mediaLibrary || []),
-            mediaFolders: Array.isArray(parsed.mediaFolders) ? parsed.mediaFolders : (initialPortfolioData.mediaFolders || []),
+            projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+            blogs: Array.isArray(parsed.blogs) ? parsed.blogs : [],
+            gallery: Array.isArray(parsed.gallery) ? parsed.gallery : [],
+            experiences: Array.isArray(parsed.experiences) ? parsed.experiences : [],
+            education: Array.isArray(parsed.education) ? parsed.education : [],
+            certificates: Array.isArray(parsed.certificates) ? parsed.certificates : [],
+            skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+            socials: Array.isArray(parsed.socials) ? parsed.socials : [],
+            mediaLibrary: Array.isArray(parsed.mediaLibrary) ? parsed.mediaLibrary : [],
+            mediaFolders: Array.isArray(parsed.mediaFolders) ? parsed.mediaFolders : [],
           };
         } catch (e) {
           console.error('Failed to parse portfolio data from storage:', e);
@@ -57,6 +62,7 @@ export class CmsService {
     try {
       const currentStoredPass = localStorage.getItem('DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1');
       const currentStoredUser = localStorage.getItem('DYNAMIC_PORTFOLIO_ADMIN_USERNAME_V1');
+      const nowIso = new Date().toISOString();
 
       const updated: PortfolioData = {
         ...data,
@@ -67,11 +73,22 @@ export class CmsService {
         },
         cmsConfig: {
           ...data.cmsConfig,
-          lastSynced: new Date().toISOString(),
+          lastSynced: nowIso,
         },
+        // Explicitly preserve clean arrays even if emptied by the user
+        projects: Array.isArray(data.projects) ? data.projects : [],
+        blogs: Array.isArray(data.blogs) ? data.blogs : [],
+        gallery: Array.isArray(data.gallery) ? data.gallery : [],
+        experiences: Array.isArray(data.experiences) ? data.experiences : [],
+        education: Array.isArray(data.education) ? data.education : [],
+        certificates: Array.isArray(data.certificates) ? data.certificates : [],
+        skills: Array.isArray(data.skills) ? data.skills : [],
+        socials: Array.isArray(data.socials) ? data.socials : [],
+        mediaLibrary: Array.isArray(data.mediaLibrary) ? data.mediaLibrary : [],
+        mediaFolders: Array.isArray(data.mediaFolders) ? data.mediaFolders : [],
       };
 
-      // লোকাল ক্যাশে সেভ (যাতে সাইট ফাস্ট থাকে)
+      // লোকাল ক্যাশে সেভ (যাতে সাইট ফাস্ট থাকে এবং ডাটা লস না হয়)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: updated }));
 
@@ -88,7 +105,7 @@ export class CmsService {
     }
   }
 
-  // ৩. ব্যাকগ্রাউন্ড সিঙ্ক (সুরক্ষিত মেকানিজম - যাতে ডেমো ডাটা দিয়ে ওভাররাইট না হয়)
+  // ৩. ব্যাকগ্রাউন্ড সিঙ্ক (টাইমস্ট্যাম্প ভ্যালিডেশন সহ - যাতে লোকাল ডিলিট বা এডিট ওভাররাইট না হয়)
   private static async syncFromSupabase() {
     if (typeof window === 'undefined') return;
     try {
@@ -99,21 +116,49 @@ export class CmsService {
         .eq('id', 1)
         .single();
 
-      // সুপাবেসে যদি ভ্যালিড ডাটা থাকে, তবেই লোকাল মেমোরি আপডেট করবে
       if (data && data.content && typeof data.content === 'object') {
-        const cloudDataStr = JSON.stringify(data.content);
-        if (localStorage.getItem(STORAGE_KEY) !== cloudDataStr) {
-          localStorage.setItem(STORAGE_KEY, cloudDataStr);
+        const storedStr = localStorage.getItem(STORAGE_KEY);
+        let shouldOverwriteLocal = true;
 
-          // Sync cloud credentials to local auth storage if present
-          if (data.content.siteSettings?.adminPassword) {
-            localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1', data.content.siteSettings.adminPassword);
-          }
-          if (data.content.siteSettings?.adminUsername) {
-            localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_USERNAME_V1', data.content.siteSettings.adminUsername);
-          }
+        if (storedStr) {
+          try {
+            const localObj = JSON.parse(storedStr);
+            const localTime = localObj.cmsConfig?.lastSynced ? new Date(localObj.cmsConfig.lastSynced).getTime() : 0;
+            const cloudTime = data.content.cmsConfig?.lastSynced ? new Date(data.content.cmsConfig.lastSynced).getTime() : 0;
 
-          window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: data.content }));
+            // যদি লোকাল ডাটা ক্লাউডের চেয়ে নতুন হয় বা সমান হয়, তবে ক্লাউডের পুরনো ডাটা দিয়ে লোকাল ওভাররাইট করা যাবে না
+            if (localTime > 0 && localTime >= cloudTime) {
+              shouldOverwriteLocal = false;
+              // ব্যাকগ্রাউন্ডে ক্লাউডকে আপডেট করে রাখা হচ্ছে যাতে ক্লাউডও আপ-টু-ডেট থাকে
+              if (localTime > cloudTime) {
+                supabase
+                  .from('portfolio_configs')
+                  .upsert({ id: 1, content: localObj })
+                  .then(({ error }) => {
+                    if (error) console.warn('Background Supabase sync error:', error);
+                  });
+              }
+            }
+          } catch (e) {
+            // If local parse error, allow cloud recovery
+          }
+        }
+
+        if (shouldOverwriteLocal) {
+          const cloudDataStr = JSON.stringify(data.content);
+          if (localStorage.getItem(STORAGE_KEY) !== cloudDataStr) {
+            localStorage.setItem(STORAGE_KEY, cloudDataStr);
+
+            // Sync cloud credentials to local auth storage if present
+            if (data.content.siteSettings?.adminPassword) {
+              localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_PASSWORD_V1', data.content.siteSettings.adminPassword);
+            }
+            if (data.content.siteSettings?.adminUsername) {
+              localStorage.setItem('DYNAMIC_PORTFOLIO_ADMIN_USERNAME_V1', data.content.siteSettings.adminUsername);
+            }
+
+            window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: data.content }));
+          }
         }
       }
     } catch (err) {

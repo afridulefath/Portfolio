@@ -172,59 +172,68 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {previewExperiences.map((exp, expIdx) => (
-            <div
-              key={exp.id || `exp-preview-${expIdx}`}
-              className={`p-6 sm:p-7 rounded-3xl border flex flex-col justify-between transition-all hover:border-indigo-500/50 ${
-                darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    exp.isCurrent
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                  }`}>
-                    {exp.isCurrent ? 'Current Role' : `${exp.startDate} - ${exp.endDate}`}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                    <MapPin className="w-3 h-3" /> {exp.location}
-                  </span>
-                </div>
-
-                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {exp.position || exp.role}
-                </h3>
-                
-                <div className="flex items-center gap-2 text-sm font-semibold text-indigo-400">
-                  <Building className="w-4 h-4" />
-                  <span>{exp.company}</span>
-                </div>
-
-                <p className={`text-sm line-clamp-3 leading-relaxed ${
-                  darkMode ? 'text-slate-300' : 'text-slate-600'
-                }`}>
-                  {exp.description || exp.summary}
-                </p>
-              </div>
-
-              <div className="pt-5 mt-5 border-t border-slate-800/40 flex items-center justify-between">
-                <div className="flex flex-wrap gap-1.5">
-                  {exp.technologies?.slice(0, 3).map((tech, i) => (
-                    <span key={`exp-${exp.id || expIdx}-tech-${i}`} className="text-[11px] px-2.5 py-0.5 rounded-md bg-slate-800/60 text-slate-300 border border-slate-700">
-                      {tech}
+        {previewExperiences.length === 0 ? (
+          <div className={`p-8 rounded-3xl border text-center ${
+            darkMode ? 'bg-slate-900/40 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+          }`}>
+            <Briefcase className="w-8 h-8 mx-auto mb-2 text-indigo-400 opacity-60" />
+            <p className="text-sm">No professional experience listed yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {previewExperiences.map((exp, expIdx) => (
+              <div
+                key={exp.id || `exp-preview-${expIdx}`}
+                className={`p-6 sm:p-7 rounded-3xl border flex flex-col justify-between transition-all hover:border-indigo-500/50 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      exp.isCurrent
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                    }`}>
+                      {exp.isCurrent ? 'Current Role' : `${exp.startDate} - ${exp.endDate}`}
                     </span>
-                  ))}
+                    <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {exp.location}
+                    </span>
+                  </div>
+
+                  <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {exp.position || exp.role}
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 text-sm font-semibold text-indigo-400">
+                    <Building className="w-4 h-4" />
+                    <span>{exp.company}</span>
+                  </div>
+
+                  <p className={`text-sm line-clamp-3 leading-relaxed ${
+                    darkMode ? 'text-slate-300' : 'text-slate-600'
+                  }`}>
+                    {exp.description || exp.summary}
+                  </p>
                 </div>
-                <Link to="/experience" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1">
-                  Details <ArrowRight className="w-3 h-3" />
-                </Link>
+
+                <div className="pt-5 mt-5 border-t border-slate-800/40 flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1.5">
+                    {exp.technologies?.slice(0, 3).map((tech, i) => (
+                      <span key={`exp-${exp.id || expIdx}-tech-${i}`} className="text-[11px] px-2.5 py-0.5 rounded-md bg-slate-800/60 text-slate-300 border border-slate-700">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  <Link to="/experience" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1">
+                    Details <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 4. Education & Certification Preview */}
@@ -255,29 +264,38 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Degree Card */}
-            {previewEducation.map((edu, eduIdx) => (
-              <div
-                key={edu.id || `edu-preview-${eduIdx}`}
-                className={`p-6 rounded-2xl border ${
-                  darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xs font-bold text-indigo-400">{edu.fieldOfStudy}</span>
-                  <span className="text-xs text-slate-400">{edu.startYear} - {edu.endYear}</span>
+          {previewEducation.length === 0 ? (
+            <div className={`p-6 rounded-2xl border text-center ${
+              darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
+            }`}>
+              <GraduationCap className="w-8 h-8 mx-auto mb-2 text-indigo-400 opacity-60" />
+              <p className="text-sm">No education entries added yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Degree Card */}
+              {previewEducation.map((edu, eduIdx) => (
+                <div
+                  key={edu.id || `edu-preview-${eduIdx}`}
+                  className={`p-6 rounded-2xl border ${
+                    darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-xs font-bold text-indigo-400">{edu.fieldOfStudy}</span>
+                    <span className="text-xs text-slate-400">{edu.startYear} - {edu.endYear}</span>
+                  </div>
+                  <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {edu.degree}
+                  </h3>
+                  <p className="text-sm text-slate-400 font-medium">{edu.institution}</p>
+                  {edu.grade && (
+                    <p className="text-xs text-emerald-400 mt-2 font-medium">Result/Honors: {edu.grade}</p>
+                  )}
                 </div>
-                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {edu.degree}
-                </h3>
-                <p className="text-sm text-slate-400 font-medium">{edu.institution}</p>
-                {edu.grade && (
-                  <p className="text-xs text-emerald-400 mt-2 font-medium">Result/Honors: {edu.grade}</p>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Certifications row */}
           {previewCerts.length > 0 && (
@@ -504,28 +522,37 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {previewGallery.map((item, gIdx) => (
-            <Link
-              key={item.id || `gal-preview-${gIdx}`}
-              to="/gallery"
-              className={`group relative rounded-2xl overflow-hidden aspect-4/3 border transition-all duration-300 hover:scale-[1.02] ${
-                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'
-              }`}
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end">
-                <span className="text-[11px] font-semibold text-indigo-400">{item.category}</span>
-                <p className="text-xs font-bold text-white truncate">{item.title}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {previewGallery.length === 0 ? (
+          <div className={`p-8 rounded-3xl border text-center ${
+            darkMode ? 'bg-slate-900/40 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+          }`}>
+            <Camera className="w-8 h-8 mx-auto mb-2 text-indigo-400 opacity-60" />
+            <p className="text-sm">No gallery media uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {previewGallery.map((item, gIdx) => (
+              <Link
+                key={item.id || `gal-preview-${gIdx}`}
+                to="/gallery"
+                className={`group relative rounded-2xl overflow-hidden aspect-4/3 border transition-all duration-300 hover:scale-[1.02] ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'
+                }`}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end">
+                  <span className="text-[11px] font-semibold text-indigo-400">{item.category}</span>
+                  <p className="text-xs font-bold text-white truncate">{item.title}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 6. Contact Preview / CTA Section */}

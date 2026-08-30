@@ -170,32 +170,40 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(about.corePillars || []).map((pillar, idx) => (
-                <div
-                  key={idx}
-                  className={`p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-1 ${
-                    darkMode
-                      ? 'bg-slate-900/90 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-850'
-                      : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    {renderPillarIcon(pillar.icon)}
+            {(about.corePillars || []).length === 0 ? (
+              <div className={`p-8 rounded-3xl border text-center ${
+                darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-xs'
+              }`}>
+                <p className="text-sm">No guiding pillars added yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {(about.corePillars || []).map((pillar, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-1 ${
+                      darkMode
+                        ? 'bg-slate-900/90 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-850'
+                        : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                      {renderPillarIcon(pillar.icon)}
+                    </div>
+                    <h4 className={`text-base font-bold mb-2 ${
+                      darkMode ? 'text-slate-100' : 'text-slate-900'
+                    }`}>
+                      {pillar.title}
+                    </h4>
+                    <p className={`text-xs sm:text-sm leading-relaxed ${
+                      darkMode ? 'text-slate-400' : 'text-slate-600'
+                    }`}>
+                      {pillar.description}
+                    </p>
                   </div>
-                  <h4 className={`text-base font-bold mb-2 ${
-                    darkMode ? 'text-slate-100' : 'text-slate-900'
-                  }`}>
-                    {pillar.title}
-                  </h4>
-                  <p className={`text-xs sm:text-sm leading-relaxed ${
-                    darkMode ? 'text-slate-400' : 'text-slate-600'
-                  }`}>
-                    {pillar.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </div>
@@ -236,51 +244,60 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
             )}
           </div>
 
-          {/* Skills Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSkills.map((skill, index) => (
-              <div
-                key={index}
-                className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-3 ${
-                  darkMode
-                    ? 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                    : 'bg-white border-slate-200 hover:border-indigo-200 shadow-xs'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold text-sm ${
-                      darkMode ? 'text-slate-100' : 'text-slate-900'
-                    }`}>
-                      {skill.name}
-                    </span>
-                    {skill.featured && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                        <Flame className="w-3 h-3" />
-                        Core
+          {/* Skills Grid or Empty State */}
+          {filteredSkills.length === 0 ? (
+            <div className={`p-8 rounded-3xl border text-center ${
+              darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-xs'
+            }`}>
+              <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400 opacity-60" />
+              <p className="text-sm">No skills listed yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSkills.map((skill, index) => (
+                <div
+                  key={index}
+                  className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-3 ${
+                    darkMode
+                      ? 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                      : 'bg-white border-slate-200 hover:border-indigo-200 shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-semibold text-sm ${
+                        darkMode ? 'text-slate-100' : 'text-slate-900'
+                      }`}>
+                        {skill.name}
                       </span>
-                    )}
+                      {skill.featured && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          <Flame className="w-3 h-3" />
+                          Core
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs font-bold text-indigo-500">
+                      {skill.level}%
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-indigo-500">
-                    {skill.level}%
-                  </span>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 to-sky-400 rounded-full transition-all duration-500"
-                    style={{ width: `${skill.level}%` }}
-                  />
-                </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-indigo-500 to-sky-400 rounded-full transition-all duration-500"
+                      style={{ width: `${skill.level}%` }}
+                    />
+                  </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>{skill.category}</span>
-                  <span>{skill.level >= 90 ? 'Mastery' : skill.level >= 80 ? 'Advanced' : 'Proficient'}</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>{skill.category}</span>
+                    <span>{skill.level >= 90 ? 'Mastery' : skill.level >= 80 ? 'Advanced' : 'Proficient'}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
