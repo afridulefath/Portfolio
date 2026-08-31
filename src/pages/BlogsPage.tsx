@@ -77,6 +77,7 @@ export const BlogsPage: React.FC<BlogsPageProps> = ({ data, darkMode }) => {
         blogs={blogs}
         darkMode={darkMode}
         onSelectBlog={handleSelectBlog}
+        headerConfig={data.pageHeaders?.blogs}
       />
     </div>
   );

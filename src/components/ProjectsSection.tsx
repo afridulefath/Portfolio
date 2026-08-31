@@ -13,18 +13,20 @@ import {
   Eye,
   Filter
 } from 'lucide-react';
-import { ProjectItem } from '../types/portfolio';
+import { ProjectItem, SectionHeaderConfig } from '../types/portfolio';
 
 interface ProjectsSectionProps {
   projects: ProjectItem[];
   darkMode: boolean;
   onSelectProject: (project: ProjectItem) => void;
+  headerConfig?: SectionHeaderConfig;
 }
 
 export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ 
   projects = [], 
   darkMode, 
-  onSelectProject 
+  onSelectProject,
+  headerConfig,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -52,13 +54,13 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-3">
               <Briefcase className="w-3.5 h-3.5" />
-              <span>Engineered Solutions & Case Studies</span>
+              <span>{headerConfig?.badge || 'Engineered Solutions & Case Studies'}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Featured Projects & Portfolio
+              {headerConfig?.title || 'Featured Projects & Portfolio'}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-2xl">
-              Comprehensive case studies spanning high-scale distributed architectures, AI operations, and modern web platforms.
+              {headerConfig?.subtitle || 'Comprehensive case studies spanning high-scale distributed architectures, AI operations, and modern web platforms.'}
             </p>
           </div>
 

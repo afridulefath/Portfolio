@@ -926,38 +926,84 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {activeTab === 'about' && (
               <div className="space-y-6 max-w-3xl">
                 <div>
-                  <h3 className="text-xl font-bold">About & Guiding Philosophy</h3>
+                  <h3 className="text-xl font-bold">About &amp; Guiding Philosophy</h3>
                   <p className="text-xs text-slate-400">Manage your detailed biographical narrative, career highlights, and core guiding pillars.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Section Main Heading</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Strategic Vision, Impactful Leadership & Seamless Execution"
-                      value={formData.about.storyTitle || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        about: { ...formData.about, storyTitle: e.target.value }
-                      })}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    />
+                {/* Page Header & Badge Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      অ্যাবাউট পেজ ও সেকশন হেডার (About Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. About & Expertise"
+                        value={formData.pageHeaders?.about?.badge ?? 'About & Expertise'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            about: {
+                              ...formData.pageHeaders?.about,
+                              badge: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Heading (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Strategic Vision, Impactful Leadership & Seamless Execution"
+                        value={formData.pageHeaders?.about?.title ?? formData.about.storyTitle ?? ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          about: { ...formData.about, storyTitle: e.target.value },
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            about: {
+                              ...formData.pageHeaders?.about,
+                              title: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1">Summary Hook / Story Subtitle</label>
+                    <label className="block text-xs font-semibold mb-1">Summary Hook / Story Subtitle (ভূমিকা/সারসংক্ষেপ)</label>
                     <input
                       type="text"
                       placeholder="Brief tagline or vision statement"
-                      value={formData.about.storySummary}
+                      value={formData.pageHeaders?.about?.subtitle ?? formData.about.storySummary ?? ''}
                       onChange={(e) => setFormData({
                         ...formData,
-                        about: { ...formData.about, storySummary: e.target.value }
+                        about: { ...formData.about, storySummary: e.target.value },
+                        pageHeaders: {
+                          ...formData.pageHeaders,
+                          about: {
+                            ...formData.pageHeaders?.about,
+                            subtitle: e.target.value
+                          }
+                        }
                       })}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -1199,6 +1245,83 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   </button>
                 </div>
 
+                {/* Dynamic Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      এক্সপেরিয়েন্স পেজ ও সেকশন হেডার টেক্সট (Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Career History"
+                        value={formData.pageHeaders?.experience?.badge ?? 'Career History'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            experience: {
+                              ...formData.pageHeaders?.experience,
+                              badge: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Professional Work Experience"
+                        value={formData.pageHeaders?.experience?.title ?? 'Professional Work Experience'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            experience: {
+                              ...formData.pageHeaders?.experience,
+                              title: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. A track record of engineering leadership, cloud scalability, and delivering critical software infrastructure."
+                      value={formData.pageHeaders?.experience?.subtitle ?? 'A track record of engineering leadership, cloud scalability, and delivering critical software infrastructure.'}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pageHeaders: {
+                          ...formData.pageHeaders,
+                          experience: {
+                            ...formData.pageHeaders?.experience,
+                            subtitle: e.target.value
+                          }
+                        }
+                      })}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-6">
                   {formData.experiences.map((exp, idx) => (
                     <div 
@@ -1430,14 +1553,137 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
             {activeTab === 'education' && (
               <div className="space-y-8 max-w-3xl">
                 <div>
-                  <h3 className="text-xl font-bold">Education & Credentials</h3>
+                  <h3 className="text-xl font-bold">Education &amp; Credentials</h3>
                   <p className="text-xs text-slate-400">Manage your academic background, university degrees, and professional certifications.</p>
+                </div>
+
+                {/* Dynamic Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      এডুকেশন পেজ ও সেকশন হেডার টেক্সট (Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Academic & Credentials"
+                        value={formData.pageHeaders?.education?.badge ?? 'Academic & Credentials'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            education: {
+                              ...formData.pageHeaders?.education,
+                              badge: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Education & Certifications"
+                        value={formData.pageHeaders?.education?.title ?? 'Education & Certifications'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            education: {
+                              ...formData.pageHeaders?.education,
+                              title: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Formal computer science foundations paired with continuous industry-standard certifications."
+                      value={formData.pageHeaders?.education?.subtitle ?? 'Formal computer science foundations paired with continuous industry-standard certifications.'}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pageHeaders: {
+                          ...formData.pageHeaders,
+                          education: {
+                            ...formData.pageHeaders?.education,
+                            subtitle: e.target.value
+                          }
+                        }
+                      })}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800/40">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Education Column Title</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Academic Background"
+                        value={formData.pageHeaders?.education?.degreesTitle ?? 'Academic Background'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            education: {
+                              ...formData.pageHeaders?.education,
+                              degreesTitle: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Certifications Column Title</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Verified Certifications"
+                        value={formData.pageHeaders?.education?.certificationsTitle ?? 'Verified Certifications'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            education: {
+                              ...formData.pageHeaders?.education,
+                              certificationsTitle: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Education list */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-400">Academic Degrees</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-400">
+                      {formData.pageHeaders?.education?.degreesTitle || 'Academic Degrees'}
+                    </h4>
                     <button
                       type="button"
                       onClick={addEducationItem}
@@ -1883,6 +2129,83 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                   </button>
                 </div>
 
+                {/* Dynamic Gallery Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      গ্যালারি পেজ ও সেকশন হেডার টেক্সট (Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Visual Showcase"
+                        value={formData.pageHeaders?.gallery?.badge ?? 'Visual Showcase'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            gallery: {
+                              ...formData.pageHeaders?.gallery,
+                              badge: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Photo Gallery & Highlights"
+                        value={formData.pageHeaders?.gallery?.title ?? 'Photo Gallery & Highlights'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            gallery: {
+                              ...formData.pageHeaders?.gallery,
+                              title: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Curated snapshots of keynotes, engineering architecture milestones, workspace ergonomics, and global hackathons."
+                      value={formData.pageHeaders?.gallery?.subtitle ?? 'Curated snapshots of keynotes, engineering architecture milestones, workspace ergonomics, and global hackathons.'}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pageHeaders: {
+                          ...formData.pageHeaders,
+                          gallery: {
+                            ...formData.pageHeaders?.gallery,
+                            subtitle: e.target.value
+                          }
+                        }
+                      })}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-6">
                   {formData.gallery.map((item, idx) => (
                     <div key={item.id} className={`p-5 rounded-2xl border space-y-4 ${
@@ -2006,6 +2329,83 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
                 <div>
                   <h3 className="text-xl font-bold">Contact Information</h3>
                   <p className="text-xs text-slate-400">Direct contact channels, timezone settings, and calendar scheduling.</p>
+                </div>
+
+                {/* Dynamic Contact Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      কন্টাক্ট পেজ ও সেকশন হেডার টেক্সট (Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Direct Inquiries"
+                        value={formData.pageHeaders?.contact?.badge ?? 'Direct Inquiries'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            contact: {
+                              ...formData.pageHeaders?.contact,
+                              badge: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Let's Discuss Opportunities & Projects"
+                        value={formData.pageHeaders?.contact?.title ?? "Let's Discuss Opportunities & Projects"}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            contact: {
+                              ...formData.pageHeaders?.contact,
+                              title: e.target.value
+                            }
+                          }
+                        })}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Have an open architecture role, consulting engagement, or keynote invite? Send a direct message or schedule a call."
+                      value={formData.pageHeaders?.contact?.subtitle ?? 'Have an open architecture role, consulting engagement, or keynote invite? Send a direct message or schedule a call.'}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pageHeaders: {
+                          ...formData.pageHeaders,
+                          contact: {
+                            ...formData.pageHeaders?.contact,
+                            subtitle: e.target.value
+                          }
+                        }
+                      })}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3363,30 +3763,206 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
             {/* PROJECTS & CASE STUDIES TAB */}
             {activeTab === 'projects' && (
-              <AdminProjectsTab
-                projects={formData.projects || []}
-                onChange={(newProjects) => {
-                  const updated = { ...formData, projects: newProjects };
-                  setFormData(updated);
-                  CmsService.saveData(updated);
-                  onSave(updated);
-                }}
-                darkMode={darkMode}
-              />
+              <div className="space-y-6">
+                {/* Dynamic Projects Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      প্রজেক্টস পেজ ও সেকশন হেডার টেক্সট (Projects Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Engineered Solutions & Case Studies"
+                        value={formData.pageHeaders?.projects?.badge ?? 'Engineered Solutions & Case Studies'}
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            pageHeaders: {
+                              ...formData.pageHeaders,
+                              projects: {
+                                ...formData.pageHeaders?.projects,
+                                badge: e.target.value
+                              }
+                            }
+                          };
+                          setFormData(updated);
+                        }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Featured Projects & Portfolio"
+                        value={formData.pageHeaders?.projects?.title ?? 'Featured Projects & Portfolio'}
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            pageHeaders: {
+                              ...formData.pageHeaders,
+                              projects: {
+                                ...formData.pageHeaders?.projects,
+                                title: e.target.value
+                              }
+                            }
+                          };
+                          setFormData(updated);
+                        }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Comprehensive case studies spanning high-scale distributed architectures, AI operations, and modern web platforms."
+                      value={formData.pageHeaders?.projects?.subtitle ?? 'Comprehensive case studies spanning high-scale distributed architectures, AI operations, and modern web platforms.'}
+                      onChange={(e) => {
+                        const updated = {
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            projects: {
+                              ...formData.pageHeaders?.projects,
+                              subtitle: e.target.value
+                            }
+                          }
+                        };
+                        setFormData(updated);
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <AdminProjectsTab
+                  projects={formData.projects || []}
+                  onChange={(newProjects) => {
+                    const updated = { ...formData, projects: newProjects };
+                    setFormData(updated);
+                    CmsService.saveData(updated);
+                    onSave(updated);
+                  }}
+                  darkMode={darkMode}
+                />
+              </div>
             )}
 
             {/* BLOGS & ARTICLES TAB */}
             {activeTab === 'blogs' && (
-              <AdminBlogsTab
-                blogs={formData.blogs || []}
-                onChange={(newBlogs) => {
-                  const updated = { ...formData, blogs: newBlogs };
-                  setFormData(updated);
-                  CmsService.saveData(updated);
-                  onSave(updated);
-                }}
-                darkMode={darkMode}
-              />
+              <div className="space-y-6">
+                {/* Dynamic Blogs Section Header Settings Card */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-sky-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400">
+                      ব্লগ পেজ ও সেকশন হেডার টেক্সট (Blogs Page Header &amp; Subtitle)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Badge Text (ব্যাজ)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Technical Articles & Thought Leadership"
+                        value={formData.pageHeaders?.blogs?.badge ?? 'Technical Articles & Thought Leadership'}
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            pageHeaders: {
+                              ...formData.pageHeaders,
+                              blogs: {
+                                ...formData.pageHeaders?.blogs,
+                                badge: e.target.value
+                              }
+                            }
+                          };
+                          setFormData(updated);
+                        }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">Section Main Title (মূল শিরোনাম)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Engineering & Leadership Insights"
+                        value={formData.pageHeaders?.blogs?.title ?? 'Engineering & Leadership Insights'}
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            pageHeaders: {
+                              ...formData.pageHeaders,
+                              blogs: {
+                                ...formData.pageHeaders?.blogs,
+                                title: e.target.value
+                              }
+                            }
+                          };
+                          setFormData(updated);
+                        }}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border outline-none ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Subtitle / Introductory Description (ভূমিকা/বর্ণনা)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Deep dives on distributed systems, multi-tenancy, high-throughput cloud architectures, and project execution frameworks."
+                      value={formData.pageHeaders?.blogs?.subtitle ?? 'Deep dives on distributed systems, multi-tenancy, high-throughput cloud architectures, and project execution frameworks.'}
+                      onChange={(e) => {
+                        const updated = {
+                          ...formData,
+                          pageHeaders: {
+                            ...formData.pageHeaders,
+                            blogs: {
+                              ...formData.pageHeaders?.blogs,
+                              subtitle: e.target.value
+                            }
+                          }
+                        };
+                        setFormData(updated);
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl text-xs border outline-none resize-none ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <AdminBlogsTab
+                  blogs={formData.blogs || []}
+                  onChange={(newBlogs) => {
+                    const updated = { ...formData, blogs: newBlogs };
+                    setFormData(updated);
+                    CmsService.saveData(updated);
+                    onSave(updated);
+                  }}
+                  darkMode={darkMode}
+                />
+              </div>
             )}
 
             {/* Sticky Bottom Save Action Bar */}

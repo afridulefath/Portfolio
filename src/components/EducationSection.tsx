@@ -17,7 +17,8 @@ interface EducationSectionProps {
 }
 
 export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMode }) => {
-  const { education, certificates } = data;
+  const { education = [], certificates = [] } = data;
+  const header = data.pageHeaders?.education;
 
   return (
     <section 
@@ -32,17 +33,17 @@ export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMo
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>Academic & Credentials</span>
+            <span>{header?.badge || 'Academic & Credentials'}</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            Education & Certifications
+            {header?.title || 'Education & Certifications'}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            Formal computer science foundations paired with continuous industry-standard certifications.
+            {header?.subtitle || 'Formal computer science foundations paired with continuous industry-standard certifications.'}
           </p>
         </div>
 
@@ -58,7 +59,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMo
               <h3 className={`text-2xl font-bold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                Academic Background
+                {header?.degreesTitle || header?.educationSubtitle || 'Academic Background'}
               </h3>
             </div>
 
@@ -151,7 +152,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({ data, darkMo
               <h3 className={`text-2xl font-bold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                Verified Certifications
+                {header?.certificationsTitle || 'Verified Certifications'}
               </h3>
             </div>
 

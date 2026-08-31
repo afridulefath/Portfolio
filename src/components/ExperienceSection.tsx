@@ -26,6 +26,8 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
     setExpandedId(prev => (prev === id ? null : id));
   };
 
+  const header = data.pageHeaders?.experience;
+
   return (
     <section id="experience" className="py-24 sm:py-32 relative overflow-hidden scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
@@ -34,17 +36,17 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({ data, dark
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
             <Briefcase className="w-3.5 h-3.5" />
-            <span>Career History</span>
+            <span>{header?.badge || 'Career History'}</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            Professional Work Experience
+            {header?.title || 'Professional Work Experience'}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            A track record of engineering leadership, cloud scalability, and delivering critical software infrastructure.
+            {header?.subtitle || 'A track record of engineering leadership, cloud scalability, and delivering critical software infrastructure.'}
           </p>
         </div>
 

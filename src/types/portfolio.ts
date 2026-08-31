@@ -366,6 +366,30 @@ export interface AnalyticsSummary {
   monthlyViews: { month: string; visitors: number; pageViews: number }[];
 }
 
+export interface SectionHeaderConfig {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export interface EducationSectionHeaderConfig extends SectionHeaderConfig {
+  degreesTitle?: string;
+  degreesSubtitle?: string;
+  educationSubtitle?: string;
+  certificationsTitle?: string;
+  certificationsSubtitle?: string;
+}
+
+export interface PageHeadersConfig {
+  experience?: SectionHeaderConfig;
+  education?: EducationSectionHeaderConfig;
+  blogs?: SectionHeaderConfig;
+  projects?: SectionHeaderConfig;
+  gallery?: SectionHeaderConfig;
+  about?: SectionHeaderConfig;
+  contact?: SectionHeaderConfig;
+}
+
 export interface PortfolioData {
   personal: PersonalInfo;
   about: AboutInfo;
@@ -383,4 +407,5 @@ export interface PortfolioData {
   projects?: ProjectItem[];
   mediaLibrary?: MediaFile[];
   mediaFolders?: MediaFolder[];
+  pageHeaders?: PageHeadersConfig;
 }

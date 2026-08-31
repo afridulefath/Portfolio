@@ -77,6 +77,7 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ data, darkMode }) =>
         projects={projects}
         darkMode={darkMode}
         onSelectProject={handleSelectProject}
+        headerConfig={data.pageHeaders?.projects}
       />
     </div>
   );

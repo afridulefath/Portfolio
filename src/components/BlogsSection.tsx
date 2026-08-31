@@ -12,18 +12,20 @@ import {
   ChevronRight,
   TrendingUp
 } from 'lucide-react';
-import { BlogPost } from '../types/portfolio';
+import { BlogPost, SectionHeaderConfig } from '../types/portfolio';
 
 interface BlogsSectionProps {
   blogs: BlogPost[];
   darkMode: boolean;
   onSelectBlog: (blog: BlogPost) => void;
+  headerConfig?: SectionHeaderConfig;
 }
 
 export const BlogsSection: React.FC<BlogsSectionProps> = ({
   blogs = [],
   darkMode,
   onSelectBlog,
+  headerConfig,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -56,13 +58,13 @@ export const BlogsSection: React.FC<BlogsSectionProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 mb-3">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Technical Articles & Thought Leadership</span>
+              <span>{headerConfig?.badge || 'Technical Articles & Thought Leadership'}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Engineering & Leadership Insights
+              {headerConfig?.title || 'Engineering & Leadership Insights'}
             </h2>
             <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-2xl">
-              Deep dives on distributed systems, multi-tenancy, high-throughput cloud architectures, and project execution frameworks.
+              {headerConfig?.subtitle || 'Deep dives on distributed systems, multi-tenancy, high-throughput cloud architectures, and project execution frameworks.'}
             </p>
           </div>
 

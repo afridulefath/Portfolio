@@ -87,6 +87,8 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
     }
   };
 
+  const header = data.pageHeaders?.about;
+
   return (
     <section 
       id="about" 
@@ -100,17 +102,17 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ data, darkMode }) =>
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>About & Expertise</span>
+            <span>{header?.badge || 'About & Expertise'}</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            {about.storyTitle || 'Strategic Vision, Impactful Leadership & Seamless Execution'}
+            {header?.title || about.storyTitle || 'Strategic Vision, Impactful Leadership & Seamless Execution'}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            {about.storySummary}
+            {header?.subtitle || about.storySummary}
           </p>
         </div>
 

@@ -33,6 +33,8 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data, darkMode }
     }
   };
 
+  const header = data.pageHeaders?.gallery;
+
   return (
     <section id="gallery" className="py-24 sm:py-32 relative scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
@@ -41,17 +43,17 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data, darkMode }
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
             <Camera className="w-3.5 h-3.5" />
-            <span>Visual Showcase</span>
+            <span>{header?.badge || 'Visual Showcase'}</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            Photo Gallery & Highlights
+            {header?.title || 'Photo Gallery & Highlights'}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            Curated snapshots of keynotes, engineering architecture milestones, workspace ergonomics, and global hackathons.
+            {header?.subtitle || 'Curated snapshots of keynotes, engineering architecture milestones, workspace ergonomics, and global hackathons.'}
           </p>
         </div>
 

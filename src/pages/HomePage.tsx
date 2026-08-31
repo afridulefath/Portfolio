@@ -150,15 +150,15 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">
               <Briefcase className="w-4 h-4" />
-              <span>Career Highlights</span>
+              <span>{data.pageHeaders?.experience?.badge || 'Career Highlights'}</span>
             </div>
             <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
               darkMode ? 'text-white' : 'text-slate-900'
             }`}>
-              Professional Experience
+              {data.pageHeaders?.experience?.title || 'Professional Experience'}
             </h2>
             <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Featured leadership and engineering milestones
+              {data.pageHeaders?.experience?.subtitle || 'Featured leadership and engineering milestones'}
             </p>
           </div>
 
@@ -245,13 +245,18 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">
                 <GraduationCap className="w-4 h-4" />
-                <span>Academic & Credentials</span>
+                <span>{data.pageHeaders?.education?.badge || 'Academic & Credentials'}</span>
               </div>
               <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                Education & Certifications
+                {data.pageHeaders?.education?.title || 'Education & Certifications'}
               </h2>
+              {data.pageHeaders?.education?.subtitle && (
+                <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {data.pageHeaders.education.subtitle}
+                </p>
+              )}
             </div>
 
             <Link
@@ -336,15 +341,15 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">
                 <Briefcase className="w-4 h-4" />
-                <span>Selected Works & Case Studies</span>
+                <span>{data.pageHeaders?.projects?.badge || 'Selected Works & Case Studies'}</span>
               </div>
               <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                Featured Architectural Solutions
+                {data.pageHeaders?.projects?.title || 'Featured Architectural Solutions'}
               </h2>
               <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Production-grade platforms and systems engineered for extreme scale.
+                {data.pageHeaders?.projects?.subtitle || 'Production-grade platforms and systems engineered for extreme scale.'}
               </p>
             </div>
 
@@ -416,15 +421,15 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-500 mb-2">
                 <BookOpen className="w-4 h-4" />
-                <span>Publications & Insights</span>
+                <span>{data.pageHeaders?.blogs?.badge || 'Publications & Insights'}</span>
               </div>
               <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
                 darkMode ? 'text-white' : 'text-slate-900'
               }`}>
-                Latest Engineering Articles
+                {data.pageHeaders?.blogs?.title || 'Latest Engineering Articles'}
               </h2>
               <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Thought leadership, architectural blueprints, and deep dives.
+                {data.pageHeaders?.blogs?.subtitle || 'Thought leadership, architectural blueprints, and deep dives.'}
               </p>
             </div>
 
@@ -500,15 +505,15 @@ export const HomePage: React.FC<HomePageProps> = ({ data, darkMode, onOpenCms })
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">
               <Camera className="w-4 h-4" />
-              <span>Media & Showcase</span>
+              <span>{data.pageHeaders?.gallery?.badge || 'Media & Showcase'}</span>
             </div>
             <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
               darkMode ? 'text-white' : 'text-slate-900'
             }`}>
-              Visual Gallery Preview
+              {data.pageHeaders?.gallery?.title || 'Visual Gallery Preview'}
             </h2>
             <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Events, speaking engagements, and milestone snapshots
+              {data.pageHeaders?.gallery?.subtitle || 'Events, speaking engagements, and milestone snapshots'}
             </p>
           </div>
 

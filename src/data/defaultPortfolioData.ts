@@ -824,4 +824,44 @@ In 2026, Google's search algorithm heavily rewards websites that provide instant
       ogImageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
     },
   ],
+  pageHeaders: {
+    experience: {
+      badge: 'Career History',
+      title: 'Professional Work Experience',
+      subtitle: 'A track record of engineering leadership, cloud scalability, and delivering critical software infrastructure.',
+    },
+    education: {
+      badge: 'Academic & Credentials',
+      title: 'Education & Certifications',
+      subtitle: 'Formal computer science foundations paired with continuous industry-standard certifications.',
+      educationSubtitle: 'Academic Background',
+      certificationsTitle: 'Verified Certifications',
+      certificationsSubtitle: 'Industry-standard credentials and verified cloud architecture licenses.',
+    },
+    blogs: {
+      badge: 'Technical Articles & Thought Leadership',
+      title: 'Engineering & Leadership Insights',
+      subtitle: 'Deep dives on distributed systems, multi-tenancy, high-throughput cloud architectures, and project execution frameworks.',
+    },
+    projects: {
+      badge: 'Engineered Solutions & Case Studies',
+      title: 'Featured Projects & Portfolio',
+      subtitle: 'Comprehensive case studies spanning high-scale distributed architectures, AI operations, and modern web platforms.',
+    },
+    gallery: {
+      badge: 'Visual Showcase',
+      title: 'Photo Gallery & Highlights',
+      subtitle: 'Curated snapshots of keynotes, engineering architecture milestones, workspace ergonomics, and global hackathons.',
+    },
+    about: {
+      badge: 'About & Expertise',
+      title: 'Strategic Vision, Impactful Leadership & Seamless Execution',
+      subtitle: 'Bridging project leadership rigor with intuitive communication, team collaboration, and client success.',
+    },
+    contact: {
+      badge: 'Direct Inquiries',
+      title: "Let's Discuss Opportunities & Projects",
+      subtitle: 'Have an open architecture role, consulting engagement, or keynote invite? Send a direct message or schedule a call.',
+    },
+  },
 };

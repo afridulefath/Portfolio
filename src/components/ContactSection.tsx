@@ -141,6 +141,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ data, darkMode }
     setIsSubmitted(false);
   };
 
+  const header = data.pageHeaders?.contact;
+
   return (
     <section 
       id="contact" 
@@ -154,17 +156,17 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ data, darkMode }
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
             <Mail className="w-3.5 h-3.5" />
-            <span>Direct Inquiries</span>
+            <span>{header?.badge || 'Direct Inquiries'}</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            Let's Discuss Opportunities & Projects
+            {header?.title || "Let's Discuss Opportunities & Projects"}
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${
             darkMode ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            Have an open architecture role, consulting engagement, or keynote invite? Send a direct message or schedule a call.
+            {header?.subtitle || 'Have an open architecture role, consulting engagement, or keynote invite? Send a direct message or schedule a call.'}
           </p>
         </div>
 

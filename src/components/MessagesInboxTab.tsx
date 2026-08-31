@@ -14,10 +14,19 @@ import {
   Reply, 
   AlertCircle,
   Sparkles,
-  Filter
+  Filter,
+  CheckCircle2,
+  Settings,
+  Send,
+  MessageSquareReply,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { ContactMessage } from '../types/message';
 import { MessageService } from '../services/messageService';
+import { EmailReplyModal } from './EmailReplyModal';
+import { EmailConfigModal } from './EmailConfigModal';
 
 interface MessagesInboxTabProps {
   darkMode?: boolean;
@@ -30,8 +39,11 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
     return list.length > 0 ? list[0].id : null;
   });
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filter, setFilter] = useState<'all' | 'unread' | 'starred'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'replied'>('all');
   const [copied, setCopied] = useState<boolean>(false);
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState<boolean>(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false);
+  const [showReplyHistory, setShowReplyHistory] = useState<boolean>(true);
 
   useEffect(() => {
     const handleUpdate = (e: any) => {
@@ -85,6 +97,7 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
   const filteredMessages = messages.filter((msg) => {
     if (filter === 'unread' && msg.read) return false;
     if (filter === 'starred' && !msg.starred) return false;
+    if (filter === 'replied' && !msg.replied) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -100,6 +113,7 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
   const selectedMessage = messages.find((m) => m.id === selectedId) || null;
   const unreadCount = messages.filter((m) => !m.read).length;
   const starredCount = messages.filter((m) => m.starred).length;
+  const repliedCount = messages.filter((m) => m.replied).length;
 
   return (
     <div className="space-y-6">
@@ -108,14 +122,24 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
         <div>
           <h3 className="text-xl font-bold flex items-center gap-2">
             <Inbox className="w-5 h-5 text-indigo-400" />
-            <span>বার্তা ইনবক্স (Contact Messages Inbox)</span>
+            <span>বার্তা ইনবক্স ও ইমেইল রিপ্লাই (Messages Inbox & Email Reply)</span>
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            কন্টাক্ট ফর্ম থেকে ভিজিটর ও ক্লায়েন্টদের পাঠানো সমস্ত বার্তা এখানে সরাসরি প্রদর্শিত ও সংরক্ষিত হয়।
+            কন্টাক্ট ফর্ম থেকে আসা বার্তা পড়ুন এবং Gmail SMTP ও Supabase সিঙ্কের মাধ্যমে সরাসরি ভিজিটরের ইমেইলে উত্তর দিন।
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsConfigModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:border-slate-600 transition-all cursor-pointer"
+            title="ইমেইল সার্ভার কনফিগারেশন (Gmail SMTP / Custom SMTP)"
+          >
+            <Settings className="w-3.5 h-3.5 text-indigo-400" />
+            <span>ইমেইল সেটিংস</span>
+          </button>
+
           {unreadCount > 0 && (
             <button
               type="button"
@@ -141,7 +165,7 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
       </div>
 
       {/* Stats Counters */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div 
           onClick={() => setFilter('all')}
           className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
@@ -186,10 +210,25 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           </div>
           <p className="text-xl font-bold mt-1 text-amber-400">{starredCount}</p>
         </div>
+
+        <div 
+          onClick={() => setFilter('replied')}
+          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+            filter === 'replied'
+              ? 'border-sky-500 bg-sky-500/10 shadow-xs'
+              : darkMode ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400 font-semibold">উত্তর দেওয়া হয়েছে (Replied)</span>
+            <CheckCircle2 className="w-4 h-4 text-sky-400" />
+          </div>
+          <p className="text-xl font-bold mt-1 text-sky-400">{repliedCount}</p>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -203,11 +242,11 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-800/40 p-1 rounded-xl border border-slate-700/60">
+        <div className="flex items-center gap-1 bg-slate-800/40 p-1 rounded-xl border border-slate-700/60 overflow-x-auto">
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               filter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -216,7 +255,7 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           <button
             type="button"
             onClick={() => setFilter('unread')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               filter === 'unread' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -225,11 +264,20 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           <button
             type="button"
             onClick={() => setFilter('starred')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               filter === 'starred' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Starred
+            Starred ({starredCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('replied')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              filter === 'replied' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Replied ({repliedCount})
           </button>
         </div>
       </div>
@@ -244,14 +292,14 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           </div>
           <h4 className="text-base font-bold">ইনবক্স খালি / No Messages Yet</h4>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            আপনার কন্টাক্ট ফর্ম থেকে কেউ মেসেজ পাঠালে তা সাথে সাথে এখানে এসে জমা হবে।
+            আপনার কন্টাক্ট ফর্ম থেকে কেউ মেসেজ পাঠালে তা সাথে সাথে এখানে এসে জমা হবে এবং সরাসরি ইমেইল রিপ্লাই দেওয়া যাবে।
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start min-h-[420px]">
           
           {/* Left Column: Messages List */}
-          <div className={`lg:col-span-5 rounded-2xl border divide-y overflow-y-auto max-h-[500px] ${
+          <div className={`lg:col-span-5 rounded-2xl border divide-y overflow-y-auto max-h-[560px] ${
             darkMode ? 'bg-slate-900/60 border-slate-800 divide-slate-800/60' : 'bg-white border-slate-200 divide-slate-100'
           }`}>
             {filteredMessages.length === 0 ? (
@@ -292,11 +340,19 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
                         </span>
                       </div>
 
-                      <p className={`text-xs truncate ${
-                        !msg.read ? 'font-semibold text-indigo-400' : 'text-slate-300'
-                      }`}>
-                        {msg.subject}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={`text-xs truncate flex-1 ${
+                          !msg.read ? 'font-semibold text-indigo-400' : 'text-slate-300'
+                        }`}>
+                          {msg.subject}
+                        </p>
+                        {msg.replied && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/20 shrink-0 flex items-center gap-0.5">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            <span>Replied</span>
+                          </span>
+                        )}
+                      </div>
 
                       <p className="text-[11px] text-slate-400 line-clamp-1">
                         {msg.message}
@@ -321,7 +377,7 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
           </div>
 
           {/* Right Column: Selected Message Details */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 space-y-4">
             {selectedMessage ? (
               <div className={`p-6 rounded-2xl border space-y-5 ${
                 darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
@@ -333,12 +389,20 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
                       {selectedMessage.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="text-base font-bold text-white flex items-center gap-2">
-                        <span>{selectedMessage.name}</span>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base font-bold text-white">
+                          {selectedMessage.name}
+                        </h4>
                         {selectedMessage.starred && (
                           <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                         )}
-                      </h4>
+                        {selectedMessage.replied && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>উত্তর দেওয়া হয়েছে</span>
+                          </span>
+                        )}
+                      </div>
                       <a
                         href={`mailto:${selectedMessage.email}`}
                         className="text-xs text-indigo-400 hover:underline flex items-center gap-1 mt-0.5"
@@ -349,15 +413,17 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject)}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-xs cursor-pointer"
-                      title="ইমেইলে উত্তর দিন"
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {/* Direct In-App Reply Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsReplyModalOpen(true)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/30 cursor-pointer"
+                      title="ইমেইল উত্তর পাঠান (In-App Reply via Gmail SMTP)"
                     >
                       <Reply className="w-3.5 h-3.5" />
-                      <span>ইমেইলে উত্তর দিন</span>
-                    </a>
+                      <span>ইমেইল উত্তর দিন</span>
+                    </button>
 
                     <button
                       type="button"
@@ -397,6 +463,64 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
                 }`}>
                   {selectedMessage.message}
                 </div>
+
+                {/* Sent Reply History Thread Section */}
+                {selectedMessage.replyHistory && selectedMessage.replyHistory.length > 0 && (
+                  <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                    <div 
+                      onClick={() => setShowReplyHistory(!showReplyHistory)}
+                      className="flex items-center justify-between cursor-pointer py-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <MessageSquareReply className="w-4 h-4" />
+                        <span>প্রেরিত উত্তরের ইতিহাস (Reply History - {selectedMessage.replyHistory.length})</span>
+                      </span>
+                      {showReplyHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+
+                    {showReplyHistory && (
+                      <div className="space-y-3">
+                        {selectedMessage.replyHistory.map((rep) => (
+                          <div 
+                            key={rep.id}
+                            className={`p-4 rounded-2xl border text-xs space-y-2 ${
+                              rep.status === 'sent'
+                                ? darkMode ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/60 border-indigo-200'
+                                : darkMode ? 'bg-red-950/20 border-red-500/30' : 'bg-red-50 border-red-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between flex-wrap gap-2 text-[11px]">
+                              <span className="font-bold text-indigo-400 flex items-center gap-1">
+                                <Send className="w-3 h-3" />
+                                <span>To: {rep.recipientName} ({rep.recipientEmail})</span>
+                              </span>
+                              <span className="text-slate-400 font-mono text-[10px]">
+                                {rep.formattedDate} · Provider: {rep.provider.toUpperCase()}
+                              </span>
+                            </div>
+
+                            <p className="font-semibold text-slate-200">
+                              {rep.replySubject}
+                            </p>
+
+                            <div className={`p-3 rounded-xl whitespace-pre-wrap font-sans text-xs leading-relaxed ${
+                              darkMode ? 'bg-slate-950/60 text-slate-300' : 'bg-white text-slate-800'
+                            }`}>
+                              {rep.replyBody}
+                            </div>
+
+                            {rep.messageId && (
+                              <p className="text-[10px] text-slate-500 font-mono">
+                                Delivery Receipt ID: {rep.messageId}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </div>
             ) : (
               <div className={`p-12 rounded-2xl border text-center text-slate-400 text-xs ${
@@ -409,6 +533,32 @@ export const MessagesInboxTab: React.FC<MessagesInboxTabProps> = ({ darkMode = t
 
         </div>
       )}
+
+      {/* In-App Interactive Reply Composer Modal */}
+      {selectedMessage && (
+        <EmailReplyModal
+          message={selectedMessage}
+          isOpen={isReplyModalOpen}
+          onClose={() => setIsReplyModalOpen(false)}
+          darkMode={darkMode}
+          onOpenSettings={() => {
+            setIsReplyModalOpen(false);
+            setIsConfigModalOpen(true);
+          }}
+          onSuccess={() => {
+            // Refreshes messages state
+            setMessages(MessageService.getMessages());
+          }}
+        />
+      )}
+
+      {/* Email Server / API Configuration Modal */}
+      <EmailConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        darkMode={darkMode}
+      />
     </div>
   );
 };
+
