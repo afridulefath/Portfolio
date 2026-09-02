@@ -348,8 +348,15 @@ app.post('/api/analytics/track', async (req, res) => {
 // 2. Get Global Analytics Events
 app.get('/api/analytics/events', async (req, res) => {
   try {
+    const eventMap = new Map<string, any>();
+
+    // 1. Add server disk/memory buffer events first
+    serverAnalyticsBuffer.forEach(e => {
+      if (e && e.id) eventMap.set(e.id, e);
+    });
+
     if (supabase) {
-      // Try dedicated table first
+      // 2. Try dedicated table first
       try {
         const { data, error } = await supabase
           .from('visitor_analytics')
@@ -358,30 +365,33 @@ app.get('/api/analytics/events', async (req, res) => {
           .limit(1000);
 
         if (!error && Array.isArray(data) && data.length > 0) {
-          const formatted = data.map((d: any) => ({
-            id: d.id,
-            path: d.path,
-            title: d.title,
-            timestamp: d.created_at,
-            sessionId: d.session_id,
-            visitorId: d.visitor_id,
-            referrer: d.referrer || '',
-            source: d.source || 'Direct',
-            deviceType: d.device_type || 'Desktop',
-            browser: d.browser || 'Chrome',
-            os: d.os || 'Windows',
-            country: d.country || 'Global',
-            countryCode: d.country_code || 'UN',
-            city: d.city || 'City',
-            durationSeconds: d.duration_seconds || 15,
-            projectId: d.project_id,
-            blogSlug: d.blog_slug,
-          }));
-          return res.json({ success: true, events: formatted, source: 'supabase_table' });
+          data.forEach((d: any) => {
+            if (d && d.id) {
+              eventMap.set(d.id, {
+                id: d.id,
+                path: d.path,
+                title: d.title,
+                timestamp: d.created_at,
+                sessionId: d.session_id,
+                visitorId: d.visitor_id,
+                referrer: d.referrer || '',
+                source: d.source || 'Direct',
+                deviceType: d.device_type || 'Desktop',
+                browser: d.browser || 'Chrome',
+                os: d.os || 'Windows',
+                country: d.country || 'Global',
+                countryCode: d.country_code || 'UN',
+                city: d.city || 'City',
+                durationSeconds: d.duration_seconds || 15,
+                projectId: d.project_id,
+                blogSlug: d.blog_slug,
+              });
+            }
+          });
         }
       } catch {}
 
-      // Try portfolio_configs id: 2
+      // 3. Try portfolio_configs id: 2
       try {
         const { data: configData } = await supabase
           .from('portfolio_configs')
@@ -390,14 +400,22 @@ app.get('/api/analytics/events', async (req, res) => {
           .single();
 
         if (configData && configData.content && Array.isArray(configData.content.events) && configData.content.events.length > 0) {
-          return res.json({ success: true, events: configData.content.events, source: 'supabase_config' });
+          configData.content.events.forEach((e: any) => {
+            if (e && e.id && !eventMap.has(e.id)) {
+              eventMap.set(e.id, e);
+            }
+          });
         }
       } catch {}
     }
 
-    res.json({ success: true, events: serverAnalyticsBuffer, source: 'server_memory' });
+    const combinedEvents = Array.from(eventMap.values()).sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    res.json({ success: true, events: combinedEvents, count: combinedEvents.length });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: err.message, events: serverAnalyticsBuffer });
   }
 });
 

@@ -290,13 +290,13 @@ export class AnalyticsService {
     try {
       const cleanPath = path || window.location.pathname || '/';
       
-      // Debounce rapid duplicate tracking (within 1 second on same path)
+      // Debounce rapid duplicate tracking (only tiny 150ms window to prevent strict mode double-mount, never block refresh)
       const lastTrackStr = sessionStorage.getItem(LAST_TRACKED_KEY);
       const now = Date.now();
       if (lastTrackStr) {
         try {
           const last = JSON.parse(lastTrackStr);
-          if (last.path === cleanPath && now - last.time < 1000) {
+          if (last.path === cleanPath && now - last.time < 150) {
             return;
           }
         } catch {}
@@ -404,11 +404,25 @@ export class AnalyticsService {
   }
 
   /**
+   * Guarantees at least 1 real visit is recorded for the active session if completely blank
+   */
+  public static ensureInitialVisit(): void {
+    if (typeof window === 'undefined') return;
+    const all = this.getAllEvents();
+    if (all.length === 0) {
+      this.trackPageView(
+        window.location.pathname || '/',
+        document.title || 'Alex Vance Portfolio'
+      );
+    }
+  }
+
+  /**
    * Sync and merge server-side and Supabase global events with local events
    */
-  public static async syncGlobalEvents(): Promise<PageViewEvent[]> {
+  public static async syncGlobalEvents(force: boolean = false): Promise<PageViewEvent[]> {
     if (typeof window === 'undefined') return [];
-    if (this.isSyncing || Date.now() - this.lastSyncTime < 2500) {
+    if (!force && (this.isSyncing || Date.now() - this.lastSyncTime < 1500)) {
       return this.getAllEvents();
     }
 

@@ -49,8 +49,11 @@ const SOURCE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#
 
 export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ darkMode }) => {
   const [timeFilter, setTimeFilter] = useState<'all' | 'today' | '7d' | '30d'>('all');
-  const [summary, setSummary] = useState<AnalyticsSummary>(() => AnalyticsService.getAnalyticsSummary('all'));
-  const [recentEvents, setRecentEvents] = useState<PageViewEvent[]>([]);
+  const [summary, setSummary] = useState<AnalyticsSummary>(() => {
+    AnalyticsService.ensureInitialVisit();
+    return AnalyticsService.getAnalyticsSummary('all');
+  });
+  const [recentEvents, setRecentEvents] = useState<PageViewEvent[]>(() => AnalyticsService.getAllEvents().slice(0, 15));
   const [chartView, setChartView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -65,7 +68,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
   const syncGlobalData = async () => {
     setIsSyncing(true);
     try {
-      await AnalyticsService.syncGlobalEvents();
+      await AnalyticsService.syncGlobalEvents(true);
       loadData();
     } finally {
       setIsSyncing(false);
@@ -73,6 +76,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
   };
 
   useEffect(() => {
+    AnalyticsService.ensureInitialVisit();
     loadData();
     syncGlobalData();
 
@@ -82,12 +86,12 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
 
     window.addEventListener('portfolio_analytics_updated', handleUpdate);
 
-    // Auto-poll every 6 seconds for live global visits from other devices/browsers
+    // Auto-poll every 5 seconds for live global visits from other devices/browsers
     const intervalId = setInterval(() => {
       AnalyticsService.syncGlobalEvents().then(() => {
         loadData();
       });
-    }, 6000);
+    }, 5000);
 
     return () => {
       window.removeEventListener('portfolio_analytics_updated', handleUpdate);
