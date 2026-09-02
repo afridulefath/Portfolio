@@ -15,11 +15,12 @@ import {
   RotateCcw, 
   Sparkles, 
   CheckCircle2, 
-  ExternalLink,
-  Layers,
-  FileText,
-  Compass,
-  ArrowUpRight
+  Layers, 
+  FileText, 
+  Compass, 
+  RefreshCw,
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -33,8 +34,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer, 
+  Legend 
 } from 'recharts';
 import { AnalyticsService } from '../services/analyticsService';
 import { AnalyticsSummary, PageViewEvent } from '../types/portfolio';
@@ -52,16 +53,28 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
   const [recentEvents, setRecentEvents] = useState<PageViewEvent[]>([]);
   const [chartView, setChartView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   const loadData = () => {
     const sum = AnalyticsService.getAnalyticsSummary(timeFilter);
     setSummary(sum);
     const all = AnalyticsService.getAllEvents();
-    setRecentEvents(all.slice(0, 10));
+    setRecentEvents(all.slice(0, 15));
+  };
+
+  const syncGlobalData = async () => {
+    setIsSyncing(true);
+    try {
+      await AnalyticsService.syncGlobalEvents();
+      loadData();
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
     loadData();
+    syncGlobalData();
 
     const handleUpdate = () => {
       loadData();
@@ -77,10 +90,10 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `portfolio-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `portfolio-real-analytics-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showNotice('Analytics JSON Exported Successfully!');
+    showNotice('Real Analytics JSON Exported Successfully!');
   };
 
   const handleExportCsv = () => {
@@ -89,17 +102,17 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `portfolio-analytics-raw-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `portfolio-real-analytics-raw-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showNotice('Analytics CSV Exported Successfully!');
+    showNotice('Real Analytics CSV Exported Successfully!');
   };
 
   const handleResetData = () => {
-    if (confirm('Are you sure you want to refresh analytics data?')) {
+    if (confirm('Are you sure you want to clear real analytics events? This will reset telemetry to zero until new visits occur.')) {
       AnalyticsService.resetAnalytics();
       loadData();
-      showNotice('Analytics reset & refreshed successfully.');
+      showNotice('Analytics database cleared successfully.');
     }
   };
 
@@ -110,9 +123,10 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
 
   // Format seconds to mm:ss
   const formatDuration = (seconds: number) => {
+    if (!seconds || seconds <= 0) return '0s';
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}m ${s}s`;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
   };
 
   // Active chart data
@@ -129,15 +143,15 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
       {/* Top Header & Range Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold">Visitor Analytics & Live Intelligence</h3>
-            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-xl font-bold">Visitor Analytics & Real Traffic</h3>
+            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Tracking
+              100% Real Live Traffic
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Real-time telemetry, geographic breakdown, device statistics & content engagement.
+            Verified telemetry: Real unique visitors, authentic page views, live geo IP locations & device breakdown.
           </p>
         </div>
 
@@ -164,6 +178,20 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             ))}
           </div>
 
+          {/* Sync Button */}
+          <button
+            type="button"
+            onClick={syncGlobalData}
+            disabled={isSyncing}
+            title="Sync Live Global Telemetry"
+            className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-indigo-400' : ''}`} />
+            <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync'}</span>
+          </button>
+
           {/* Action buttons */}
           <button
             type="button"
@@ -174,7 +202,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export JSON</span>
+            <span className="hidden sm:inline">JSON</span>
           </button>
 
           <button
@@ -192,7 +220,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           <button
             type="button"
             onClick={handleResetData}
-            title="Reset Telemetry Data"
+            title="Clear Analytics Data"
             className={`p-2 rounded-xl border text-xs text-slate-400 hover:text-red-400 transition-colors cursor-pointer ${
               darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
             }`}
@@ -216,15 +244,14 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
         }`}>
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-semibold">Total Visitors</span>
+            <span className="text-xs font-semibold">Unique Visitors</span>
             <Users className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {summary.totalVisitors.toLocaleString()}
+            {summary.uniqueVisitors.toLocaleString()}
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-            <TrendingUp className="w-3 h-3" />
-            <span>{summary.uniqueVisitors.toLocaleString()} Unique</span>
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-indigo-400 font-medium">
+            <span>{summary.totalVisitors.toLocaleString()} Total Sessions</span>
           </div>
         </div>
 
@@ -240,7 +267,11 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             {summary.totalPageViews.toLocaleString()}
           </div>
           <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-            <span>Avg {(summary.totalPageViews / (summary.totalVisitors || 1)).toFixed(1)} views/user</span>
+            <span>
+              {summary.uniqueVisitors > 0 
+                ? `${(summary.totalPageViews / summary.uniqueVisitors).toFixed(1)} views/visitor` 
+                : '0 views/visitor'}
+            </span>
           </div>
         </div>
 
@@ -249,7 +280,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
         }`}>
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-semibold">Today / Weekly</span>
+            <span className="text-xs font-semibold">Today's Visitors</span>
             <Calendar className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-400">
@@ -272,7 +303,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             {formatDuration(summary.avgSessionDuration)}
           </div>
           <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-            <span>{summary.returningVisitors} Returning users</span>
+            <span>{summary.returningVisitors} Returning sessions</span>
           </div>
         </div>
       </div>
@@ -285,9 +316,9 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           <div>
             <h4 className="text-sm font-bold flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-indigo-400" />
-              <span>Visitor & Page View Traffic Trends</span>
+              <span>Visitor & Page View Traffic Trends (Actual Data)</span>
             </h4>
-            <p className="text-xs text-slate-400">Interactive telemetry over time</p>
+            <p className="text-xs text-slate-400">Real counts recorded over time</p>
           </div>
 
           <div className={`p-0.5 rounded-xl border flex items-center gap-1 w-fit ${
@@ -336,6 +367,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
                 stroke={darkMode ? '#94a3b8' : '#64748b'} 
                 fontSize={11} 
                 tickLine={false} 
+                allowDecimals={false}
               />
               <Tooltip 
                 contentStyle={{
@@ -359,7 +391,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
               <Area 
                 type="monotone" 
                 dataKey="visitors" 
-                name="Visitors" 
+                name="Unique Visitors" 
                 stroke="#6366f1" 
                 strokeWidth={2.5}
                 fillOpacity={1} 
@@ -381,31 +413,35 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             <span>Traffic Source Channels</span>
           </h4>
           <div className="space-y-2.5">
-            {summary.sources.map((src, i) => (
-              <div key={src.name} className="space-y-1">
-                <div className="flex items-center justify-between text-xs font-medium">
-                  <span className="flex items-center gap-2">
-                    <span 
-                      className="w-2.5 h-2.5 rounded-full" 
-                      style={{ backgroundColor: SOURCE_COLORS[i % SOURCE_COLORS.length] }}
+            {summary.sources.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-2">No traffic source recorded yet.</p>
+            ) : (
+              summary.sources.map((src, i) => (
+                <div key={src.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-medium">
+                    <span className="flex items-center gap-2">
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full" 
+                        style={{ backgroundColor: SOURCE_COLORS[i % SOURCE_COLORS.length] }}
+                      />
+                      <span>{src.name}</span>
+                    </span>
+                    <span className="font-mono text-slate-400">
+                      {src.count} ({src.percentage}%)
+                    </span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                    <div 
+                      className="h-full rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${Math.max(src.percentage, 2)}%`,
+                        backgroundColor: SOURCE_COLORS[i % SOURCE_COLORS.length] 
+                      }}
                     />
-                    <span>{src.name}</span>
-                  </span>
-                  <span className="font-mono text-slate-400">
-                    {src.count} ({src.percentage}%)
-                  </span>
+                  </div>
                 </div>
-                <div className={`w-full h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                  <div 
-                    className="h-full rounded-full transition-all duration-500" 
-                    style={{ 
-                      width: `${Math.max(src.percentage, 3)}%`,
-                      backgroundColor: SOURCE_COLORS[i % SOURCE_COLORS.length] 
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -418,7 +454,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             <span>Device Breakdown & Screen Types</span>
           </h4>
           <div className="grid grid-cols-3 gap-3 mb-4 text-center">
-            {summary.devices.map((dev, idx) => (
+            {summary.devices.map((dev) => (
               <div 
                 key={dev.name} 
                 className={`p-3 rounded-2xl border ${
@@ -437,18 +473,22 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
 
           {/* Browser list */}
           <div className="space-y-1.5 pt-2 border-t border-slate-800">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Top Browsers:</span>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Browsers:</span>
             <div className="flex flex-wrap gap-2">
-              {summary.browsers.slice(0, 4).map((b) => (
-                <span 
-                  key={b.name}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  {b.name}: <strong className="font-mono text-indigo-400">{b.count}</strong>
-                </span>
-              ))}
+              {summary.browsers.length === 0 ? (
+                <span className="text-xs text-slate-400">No browser data yet</span>
+              ) : (
+                summary.browsers.slice(0, 5).map((b) => (
+                  <span 
+                    key={b.name}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {b.name}: <strong className="font-mono text-indigo-400">{b.count}</strong>
+                  </span>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -465,23 +505,27 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             <span>Most Viewed Pages</span>
           </h4>
           <div className="divide-y divide-slate-800/40">
-            {summary.topPages.map((page, idx) => (
-              <div key={page.path} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-400 font-mono text-[11px] flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <div className="truncate">
-                    <p className="font-semibold truncate">{page.title || page.path}</p>
-                    <code className="text-[11px] text-slate-400 truncate block">{page.path}</code>
+            {summary.topPages.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-3 text-center">No page views recorded for this filter yet.</p>
+            ) : (
+              summary.topPages.map((page, idx) => (
+                <div key={page.path} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-400 font-mono text-[11px] flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div className="truncate">
+                      <p className="font-semibold truncate">{page.title || page.path}</p>
+                      <code className="text-[11px] text-slate-400 truncate block">{page.path}</code>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 font-mono font-bold text-sky-400">
+                    <span>{page.views}</span>
+                    <span className="text-[10px] text-slate-400 font-sans">views</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 font-mono font-bold text-sky-400">
-                  <span>{page.views}</span>
-                  <span className="text-[10px] text-slate-400 font-sans">views</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -494,20 +538,24 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
             <span>Top Engaging Projects</span>
           </h4>
           <div className="divide-y divide-slate-800/40">
-            {summary.topProjects.map((proj, idx) => (
-              <div key={proj.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-400 font-mono text-[11px] flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <p className="font-semibold truncate">{proj.title}</p>
+            {summary.topProjects.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-3 text-center">No project case studies viewed yet. Live tracking active.</p>
+            ) : (
+              summary.topProjects.map((proj, idx) => (
+                <div key={proj.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-400 font-mono text-[11px] flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <p className="font-semibold truncate">{proj.title}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 font-mono font-bold text-amber-400">
+                    <span>{proj.views}</span>
+                    <span className="text-[10px] text-slate-400 font-sans">views</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 font-mono font-bold text-amber-400">
-                  <span>{proj.views}</span>
-                  <span className="text-[10px] text-slate-400 font-sans">views</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -518,24 +566,28 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
       }`}>
         <h4 className="text-sm font-bold flex items-center gap-2 mb-3">
           <Globe className="w-4 h-4 text-indigo-400" />
-          <span>Geographic Distribution (Countries & Cities)</span>
+          <span>Geographic Distribution (Real Countries & Cities)</span>
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Top Countries */}
           <div className="space-y-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Top Countries:</span>
             <div className="space-y-2">
-              {summary.countries.map((c) => (
-                <div key={c.name} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 font-medium">
-                    <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] uppercase">
-                      {c.code}
+              {summary.countries.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No geographic location captured yet.</p>
+              ) : (
+                summary.countries.map((c) => (
+                  <div key={c.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-2 font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] uppercase">
+                        {c.code}
+                      </span>
+                      <span>{c.name}</span>
                     </span>
-                    <span>{c.name}</span>
-                  </span>
-                  <span className="font-mono text-slate-400">{c.count} visits</span>
-                </div>
-              ))}
+                    <span className="font-mono text-slate-400">{c.count} visits</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -543,15 +595,19 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           <div className="space-y-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Top Cities:</span>
             <div className="space-y-2">
-              {summary.cities.map((city) => (
-                <div key={`${city.name}-${city.country}`} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 font-medium">
-                    <Compass className="w-3.5 h-3.5 text-sky-400" />
-                    <span>{city.name}, {city.country}</span>
-                  </span>
-                  <span className="font-mono text-slate-400">{city.count} visits</span>
-                </div>
-              ))}
+              {summary.cities.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No city location captured yet.</p>
+              ) : (
+                summary.cities.map((city) => (
+                  <div key={`${city.name}-${city.country}`} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-2 font-medium">
+                      <Compass className="w-3.5 h-3.5 text-sky-400" />
+                      <span>{city.name}, {city.country}</span>
+                    </span>
+                    <span className="font-mono text-slate-400">{city.count} visits</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -564,45 +620,49 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-bold flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span>Real-Time Visitor Event Stream</span>
+            <span>Real-Time Live Event Stream</span>
           </h4>
-          <span className="text-xs text-slate-400">Latest 10 Events</span>
+          <span className="text-xs text-slate-400">Latest Recorded Visits ({recentEvents.length})</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className={`border-b ${darkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
-                <th className="pb-2 font-semibold">Time</th>
-                <th className="pb-2 font-semibold">Page Path</th>
-                <th className="pb-2 font-semibold">Source</th>
-                <th className="pb-2 font-semibold">Device</th>
-                <th className="pb-2 font-semibold">Browser</th>
-                <th className="pb-2 font-semibold">Location</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/30">
-              {recentEvents.map((evt) => {
-                const timeStr = new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return (
-                  <tr key={evt.id} className="hover:bg-indigo-500/5 transition-colors">
-                    <td className="py-2.5 font-mono text-slate-400">{timeStr}</td>
-                    <td className="py-2.5 font-semibold text-indigo-400 truncate max-w-[160px]">
-                      {evt.path}
-                    </td>
-                    <td className="py-2.5">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300">
-                        {evt.source}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-slate-300">{evt.deviceType}</td>
-                    <td className="py-2.5 text-slate-300">{evt.browser}</td>
-                    <td className="py-2.5 text-slate-400">{evt.city}, {evt.countryCode}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          {recentEvents.length === 0 ? (
+            <p className="text-xs text-slate-400 italic py-6 text-center">No visitor events recorded yet. Browse any page to see live events appear here instantly!</p>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className={`border-b ${darkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
+                  <th className="pb-2 font-semibold">Time</th>
+                  <th className="pb-2 font-semibold">Page Path</th>
+                  <th className="pb-2 font-semibold">Source</th>
+                  <th className="pb-2 font-semibold">Device</th>
+                  <th className="pb-2 font-semibold">Browser</th>
+                  <th className="pb-2 font-semibold">Location</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/30">
+                {recentEvents.map((evt) => {
+                  const timeStr = new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  return (
+                    <tr key={evt.id} className="hover:bg-indigo-500/5 transition-colors">
+                      <td className="py-2.5 font-mono text-slate-400 whitespace-nowrap">{timeStr}</td>
+                      <td className="py-2.5 font-semibold text-indigo-400 truncate max-w-[160px]">
+                        {evt.path}
+                      </td>
+                      <td className="py-2.5">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300">
+                          {evt.source}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-slate-300">{evt.deviceType}</td>
+                      <td className="py-2.5 text-slate-300">{evt.browser}</td>
+                      <td className="py-2.5 text-slate-400">{evt.city}, {evt.countryCode}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

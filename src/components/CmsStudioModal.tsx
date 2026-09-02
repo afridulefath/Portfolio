@@ -53,7 +53,12 @@ import {
   FileCode,
   Check,
   HelpCircle,
-  CheckCheck
+  CheckCheck,
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeft,
+  PanelLeftClose
 } from 'lucide-react';
 import { 
   PortfolioData, 
@@ -123,6 +128,14 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
   // Messages Unread Counter
   const [unreadCount, setUnreadCount] = useState<number>(() => MessageService.getUnreadCount());
+
+  // Sidebar minimize / collapse state (on mobile < 768px default to collapsed, on desktop togglable)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
 
   // SEO Tab state
   const [seoSubTab, setSeoSubTab] = useState<'metadata' | 'social' | 'google' | 'sitemap' | 'robots' | 'schema'>('metadata');
@@ -459,29 +472,48 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
       }`}>
         
         {/* Studio Top Header */}
-        <div className={`px-6 py-4 border-b flex items-center justify-between gap-4 shrink-0 ${
+        <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-2 sm:gap-4 shrink-0 ${
           darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5" />
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Sidebar Toggle Button (Desktop & Mobile) */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              className={`p-2 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                isSidebarCollapsed
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                  : darkMode
+                    ? 'border-slate-800 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+              }`}
+              title={isSidebarCollapsed ? "Show Content Schemas Menu" : "Minimize Content Schemas Sidebar"}
+            >
+              {isSidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              <span className="text-xs font-semibold hidden md:inline">
+                {isSidebarCollapsed ? 'Schemas মেনু' : 'মিনিমাইজ'}
+              </span>
+            </button>
+
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold">CMS Studio Dashboard</h2>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                  Live Visual Editor
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-lg font-bold truncate">CMS Studio</h2>
+                <span className="hidden xs:inline-block text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1.5 sm:px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 whitespace-nowrap">
+                  Live Editor
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate hidden sm:block">
                 Edit 100% of portfolio details and upload images directly from your device.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {saveStatus && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500 animate-fade-in">
+              <span className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500 animate-fade-in">
                 <CheckCircle2 className="w-4 h-4" />
                 {saveStatus}
               </span>
@@ -489,10 +521,11 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
 
             <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md cursor-pointer"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              <span>Save & Publish</span>
+              <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Save & Publish</span>
+              <span className="xs:hidden">Save</span>
             </button>
 
             <button
@@ -516,14 +549,29 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
         </div>
 
         {/* Studio Body: Left Tabs + Right Edit Panel */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
           
-          {/* Left Tab List */}
-          <aside className={`w-56 sm:w-64 border-r shrink-0 overflow-y-auto p-3 space-y-1 ${
-            darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/50 border-slate-200'
-          }`}>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 py-2">
-              Content Schemas
+          {/* Left Tab List (Minimizable / Collapsible) */}
+          <aside 
+            className={`${
+              isSidebarCollapsed ? 'hidden' : 'flex flex-col'
+            } w-full sm:w-64 border-r shrink-0 overflow-y-auto p-3 space-y-1 z-20 ${
+              darkMode ? 'bg-slate-900/95 sm:bg-slate-900/40 border-slate-800' : 'bg-slate-50/95 sm:bg-slate-50/50 border-slate-200'
+            }`}
+          >
+            <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Content Schemas
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-indigo-400 p-1 rounded-lg hover:bg-slate-800/50 transition-colors cursor-pointer"
+                title="মিনিমাইজ করুন / Minimize Sidebar"
+              >
+                <PanelLeftClose className="w-3.5 h-3.5" />
+                <span className="text-[10px]">মিনিমাইজ</span>
+              </button>
             </div>
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -533,7 +581,12 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                      setIsSidebarCollapsed(true);
+                    }
+                  }}
                   className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
                     isActive
                       ? isSecurity
@@ -593,7 +646,34 @@ export const CmsStudioModal: React.FC<CmsStudioModalProps> = ({
           </aside>
 
           {/* Right Editor Area */}
-          <main className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8">
+          <main className={`flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 ${
+            !isSidebarCollapsed ? 'hidden sm:block' : 'block'
+          }`}>
+            {/* Top Quick Breadcrumb / Schemas Opener Pill */}
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/40">
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors ${
+                  darkMode 
+                    ? 'bg-slate-900 border-slate-800 text-indigo-400 hover:bg-slate-800' 
+                    : 'bg-slate-100 border-slate-200 text-indigo-600 hover:bg-slate-200'
+                }`}
+                title="Toggle Content Schemas Sidebar"
+              >
+                <Menu className="w-3.5 h-3.5" />
+                <span>{isSidebarCollapsed ? 'Content Schemas মেনু খুলুন' : 'Schemas মিনিমাইজ করুন'}</span>
+              </button>
+
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[11px] text-slate-400 truncate">
+                  সক্রিয় সেকশন:
+                </span>
+                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg truncate">
+                  {tabs.find((t) => t.id === activeTab)?.label}
+                </span>
+              </div>
+            </div>
             
             {/* 1. PERSONAL INFO TAB */}
             {activeTab === 'personal' && (

@@ -200,6 +200,162 @@ app.get('/api/email-config-status', (req, res) => {
   });
 });
 
+// ----------------------------------------------------
+// Real-Time Visitor Analytics Endpoints (Server & Supabase)
+// ----------------------------------------------------
+interface ServerAnalyticsEvent {
+  id: string;
+  path: string;
+  title: string;
+  timestamp: string;
+  sessionId: string;
+  visitorId?: string;
+  referrer: string;
+  source: string;
+  deviceType: string;
+  browser: string;
+  os: string;
+  country: string;
+  countryCode: string;
+  city: string;
+  durationSeconds?: number;
+  projectId?: string;
+  blogSlug?: string;
+  clientIp?: string;
+}
+
+const serverAnalyticsBuffer: ServerAnalyticsEvent[] = [];
+const MAX_SERVER_ANALYTICS = 5000;
+
+// 1. Ingest Page View Event
+app.post('/api/analytics/track', async (req, res) => {
+  try {
+    const clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+    const payload = req.body || {};
+
+    if (!payload.path) {
+      return res.status(400).json({ success: false, error: 'Path is required' });
+    }
+
+    const event: ServerAnalyticsEvent = {
+      id: payload.id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      path: String(payload.path).substring(0, 300),
+      title: String(payload.title || 'Page View').substring(0, 200),
+      timestamp: payload.timestamp || new Date().toISOString(),
+      sessionId: String(payload.sessionId || 'ses_anon').substring(0, 100),
+      visitorId: payload.visitorId ? String(payload.visitorId).substring(0, 100) : undefined,
+      referrer: String(payload.referrer || '').substring(0, 500),
+      source: String(payload.source || 'Direct').substring(0, 50),
+      deviceType: String(payload.deviceType || 'Desktop').substring(0, 50),
+      browser: String(payload.browser || 'Chrome').substring(0, 50),
+      os: String(payload.os || 'Unknown').substring(0, 50),
+      country: String(payload.country || 'Global').substring(0, 100),
+      countryCode: String(payload.countryCode || 'UN').substring(0, 10),
+      city: String(payload.city || 'City').substring(0, 100),
+      durationSeconds: Number(payload.durationSeconds) || 15,
+      projectId: payload.projectId ? String(payload.projectId).substring(0, 100) : undefined,
+      blogSlug: payload.blogSlug ? String(payload.blogSlug).substring(0, 100) : undefined,
+      clientIp: clientIp.replace('::ffff:', ''),
+    };
+
+    // Store in circular in-memory buffer
+    serverAnalyticsBuffer.unshift(event);
+    if (serverAnalyticsBuffer.length > MAX_SERVER_ANALYTICS) {
+      serverAnalyticsBuffer.pop();
+    }
+
+    // Optionally sync to Supabase visitor_analytics table
+    if (supabase) {
+      try {
+        await supabase.from('visitor_analytics').insert({
+          id: event.id,
+          path: event.path,
+          title: event.title,
+          session_id: event.sessionId,
+          visitor_id: event.visitorId || null,
+          referrer: event.referrer,
+          source: event.source,
+          device_type: event.deviceType,
+          browser: event.browser,
+          os: event.os,
+          country: event.country,
+          country_code: event.countryCode,
+          city: event.city,
+          duration_seconds: event.durationSeconds,
+          project_id: event.projectId || null,
+          blog_slug: event.blogSlug || null,
+          created_at: event.timestamp,
+        });
+      } catch (dbErr) {
+        // Table may not exist yet in user's Supabase project, fallback cleanly to memory buffer
+      }
+    }
+
+    res.json({ success: true, eventId: event.id });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Tracking error' });
+  }
+});
+
+// 2. Get Global Analytics Events
+app.get('/api/analytics/events', async (req, res) => {
+  try {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('visitor_analytics')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1000);
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const formatted = data.map((d: any) => ({
+            id: d.id,
+            path: d.path,
+            title: d.title,
+            timestamp: d.created_at,
+            sessionId: d.session_id,
+            visitorId: d.visitor_id,
+            referrer: d.referrer || '',
+            source: d.source || 'Direct',
+            deviceType: d.device_type || 'Desktop',
+            browser: d.browser || 'Chrome',
+            os: d.os || 'Windows',
+            country: d.country || 'Global',
+            countryCode: d.country_code || 'UN',
+            city: d.city || 'City',
+            durationSeconds: d.duration_seconds || 15,
+            projectId: d.project_id,
+            blogSlug: d.blog_slug,
+          }));
+          return res.json({ success: true, events: formatted, source: 'supabase' });
+        }
+      } catch (dbErr) {
+        // Fallback to server buffer
+      }
+    }
+
+    res.json({ success: true, events: serverAnalyticsBuffer, source: 'server_memory' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Clear Analytics Buffer
+app.post('/api/analytics/clear', async (req, res) => {
+  try {
+    serverAnalyticsBuffer.length = 0;
+    if (supabase) {
+      try {
+        await supabase.from('visitor_analytics').delete().neq('id', '0');
+      } catch {}
+    }
+    res.json({ success: true, message: 'Analytics cleared' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Send Reply Endpoint (Gmail SMTP + Supabase Sent Status Store)
 app.post('/api/send-reply', async (req, res) => {
   const clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';

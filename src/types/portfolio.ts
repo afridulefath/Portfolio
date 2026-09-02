@@ -331,6 +331,7 @@ export interface PageViewEvent {
   title: string;
   timestamp: string;
   sessionId: string;
+  visitorId?: string;
   referrer: string;
   source: 'Google' | 'Facebook' | 'LinkedIn' | 'Twitter' | 'Direct' | 'Referral';
   deviceType: 'Desktop' | 'Mobile' | 'Tablet';

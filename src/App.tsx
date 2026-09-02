@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
@@ -21,6 +21,34 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { PortfolioData } from './types/portfolio';
 import { CmsService } from './services/cmsService';
 import { AuthService } from './services/authService';
+import { AnalyticsService } from './services/analyticsService';
+
+/**
+ * 100% Real-Time Page View Tracker
+ * Automatically tracks page visits on every route change
+ */
+function PageViewTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Read route title if possible
+    let pageTitle = document.title || 'Alex Vance Portfolio';
+    const path = location.pathname;
+    
+    if (path === '/') pageTitle = 'Home | Alex Vance Portfolio';
+    else if (path === '/about') pageTitle = 'About | Alex Vance Portfolio';
+    else if (path === '/projects') pageTitle = 'Projects Showcase | Alex Vance';
+    else if (path === '/blogs') pageTitle = 'Articles & Engineering Insights';
+    else if (path === '/experience') pageTitle = 'Professional Experience';
+    else if (path === '/education') pageTitle = 'Education & Certifications';
+    else if (path === '/gallery') pageTitle = 'Life & Workspace Gallery';
+    else if (path === '/contact') pageTitle = 'Contact & Consultations';
+
+    AnalyticsService.trackPageView(path, pageTitle);
+  }, [location.pathname]);
+
+  return null;
+}
 
 export default function App() {
   const [data, setData] = useState<PortfolioData>(() => CmsService.getData());
@@ -141,6 +169,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <PageViewTracker />
       <ScrollToTop />
       <div 
         className={`min-h-screen font-sans transition-colors duration-300 flex flex-col justify-between ${

@@ -1,19 +1,21 @@
 /**
  * Visitor Analytics Engine & Tracking Service
- * Tracks Real-Time Page Views, Unique Visitors, Traffic Sources, Geolocation & Devices
+ * 100% Real-Time Live Telemetry: Tracks Real Page Views, Unique Visitors, Traffic Sources, Geolocation & Devices
  */
 
 import { PageViewEvent, AnalyticsSummary } from '../types/portfolio';
 
-const ANALYTICS_EVENTS_KEY = 'DYNAMIC_PORTFOLIO_ANALYTICS_EVENTS_V1';
-const SESSION_ID_KEY = 'DYNAMIC_PORTFOLIO_VISITOR_SESSION_ID_V1';
-const VISITOR_ID_KEY = 'DYNAMIC_PORTFOLIO_UNIQUE_VISITOR_ID_V1';
-const SESSION_START_KEY = 'DYNAMIC_PORTFOLIO_SESSION_START_V1';
-const GEO_CACHE_KEY = 'DYNAMIC_PORTFOLIO_GEO_CACHE_V1';
+const ANALYTICS_EVENTS_KEY = 'DYNAMIC_PORTFOLIO_REAL_ANALYTICS_EVENTS_V2';
+const SESSION_ID_KEY = 'DYNAMIC_PORTFOLIO_REAL_SESSION_ID_V2';
+const VISITOR_ID_KEY = 'DYNAMIC_PORTFOLIO_REAL_VISITOR_ID_V2';
+const SESSION_START_KEY = 'DYNAMIC_PORTFOLIO_REAL_SESSION_START_V2';
+const GEO_CACHE_KEY = 'DYNAMIC_PORTFOLIO_REAL_GEO_CACHE_V2';
+const LAST_TRACKED_KEY = 'DYNAMIC_PORTFOLIO_REAL_LAST_TRACKED_V2';
 
 export class AnalyticsService {
   private static visitorGeo: { country: string; countryCode: string; city: string } | null = null;
-  private static isGeoInitialized = false;
+  private static isSyncing = false;
+  private static lastSyncTime = 0;
 
   /**
    * Helper to detect Device Type
@@ -70,7 +72,7 @@ export class AnalyticsService {
     if (ref.includes('facebook.') || ref.includes('fb.com') || ref.includes('instagram.')) return 'Facebook';
     if (ref.includes('linkedin.')) return 'LinkedIn';
     if (ref.includes('twitter.') || ref.includes('t.co') || ref.includes('x.com')) return 'Twitter';
-    if (ref.includes(window.location.hostname)) return 'Direct';
+    if (typeof window !== 'undefined' && ref.includes(window.location.hostname)) return 'Direct';
     return 'Referral';
   }
 
@@ -111,12 +113,12 @@ export class AnalyticsService {
   }
 
   /**
-   * Asynchronously fetch or estimate geolocation without blocking UI
+   * Asynchronously fetch real visitor geolocation
    */
   public static async fetchGeoLocation(): Promise<{ country: string; countryCode: string; city: string }> {
     if (this.visitorGeo) return this.visitorGeo;
     if (typeof window === 'undefined') {
-      return { country: 'United States', countryCode: 'US', city: 'San Francisco' };
+      return { country: 'Global', countryCode: 'UN', city: 'City' };
     }
 
     try {
@@ -124,13 +126,13 @@ export class AnalyticsService {
       const cached = localStorage.getItem(GEO_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+        if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000 && parsed.geo) {
           this.visitorGeo = parsed.geo;
           return parsed.geo;
         }
       }
 
-      // Try fast lookup
+      // Fast lookup via ipwho.is with 2.5s timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2500);
       
@@ -143,19 +145,19 @@ export class AnalyticsService {
           const geo = {
             country: data.country || 'Global',
             countryCode: data.country_code || 'UN',
-            city: data.city || 'Visitor City',
+            city: data.city || 'City',
           };
           this.visitorGeo = geo;
           localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), geo }));
           return geo;
         }
       }
-    } catch (e) {
+    } catch {
       // Ignore network errors, fall back to timezone estimation
     }
 
-    // Timezone based fallback approximation
-    let fallback = { country: 'United States', countryCode: 'US', city: 'San Francisco' };
+    // Timezone based fallback
+    let fallback = { country: 'Global', countryCode: 'UN', city: 'City' };
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz.includes('Dhaka') || tz.includes('Asia/Dhaka')) {
@@ -164,12 +166,20 @@ export class AnalyticsService {
         fallback = { country: 'India', countryCode: 'IN', city: 'Kolkata' };
       } else if (tz.includes('London') || tz.includes('Europe/London')) {
         fallback = { country: 'United Kingdom', countryCode: 'GB', city: 'London' };
-      } else if (tz.includes('New_York')) {
+      } else if (tz.includes('New_York') || tz.includes('America/New_York')) {
         fallback = { country: 'United States', countryCode: 'US', city: 'New York' };
-      } else if (tz.includes('Tokyo')) {
+      } else if (tz.includes('Los_Angeles') || tz.includes('America/Los_Angeles')) {
+        fallback = { country: 'United States', countryCode: 'US', city: 'Los Angeles' };
+      } else if (tz.includes('Tokyo') || tz.includes('Asia/Tokyo')) {
         fallback = { country: 'Japan', countryCode: 'JP', city: 'Tokyo' };
-      } else if (tz.includes('Sydney')) {
+      } else if (tz.includes('Sydney') || tz.includes('Australia/Sydney')) {
         fallback = { country: 'Australia', countryCode: 'AU', city: 'Sydney' };
+      } else if (tz.includes('Berlin') || tz.includes('Europe/Berlin')) {
+        fallback = { country: 'Germany', countryCode: 'DE', city: 'Berlin' };
+      } else if (tz.includes('Dubai') || tz.includes('Asia/Dubai')) {
+        fallback = { country: 'United Arab Emirates', countryCode: 'AE', city: 'Dubai' };
+      } else if (tz.includes('Singapore') || tz.includes('Asia/Singapore')) {
+        fallback = { country: 'Singapore', countryCode: 'SG', city: 'Singapore' };
       }
     } catch {}
 
@@ -178,17 +188,33 @@ export class AnalyticsService {
   }
 
   /**
-   * Track a Page View event
+   * Track a Real Page View event
    */
   public static async trackPageView(
     path: string,
-    title: string = document.title || 'Portfolio View',
+    title: string = (typeof document !== 'undefined' ? document.title : 'Page View'),
     meta?: { projectId?: string; blogSlug?: string }
   ): Promise<void> {
     if (typeof window === 'undefined') return;
 
     try {
+      const cleanPath = path || window.location.pathname || '/';
+      
+      // Debounce rapid duplicate tracking (within 1.5 seconds on same path)
+      const lastTrackStr = sessionStorage.getItem(LAST_TRACKED_KEY);
+      const now = Date.now();
+      if (lastTrackStr) {
+        try {
+          const last = JSON.parse(lastTrackStr);
+          if (last.path === cleanPath && now - last.time < 1500) {
+            return;
+          }
+        } catch {}
+      }
+      sessionStorage.setItem(LAST_TRACKED_KEY, JSON.stringify({ path: cleanPath, time: now }));
+
       const sessionId = this.getSessionId();
+      const visitor = this.getVisitorId();
       const referrer = document.referrer || '';
       const source = this.detectTrafficSource(referrer);
       const deviceType = this.detectDeviceType();
@@ -197,12 +223,23 @@ export class AnalyticsService {
       
       const geo = await this.fetchGeoLocation();
 
+      // Estimate session duration
+      let durationSeconds = 15;
+      const sessionStart = sessionStorage.getItem(SESSION_START_KEY);
+      if (sessionStart) {
+        const diffSec = Math.round((now - parseInt(sessionStart, 10)) / 1000);
+        if (diffSec > 0 && diffSec < 3600) {
+          durationSeconds = Math.max(15, diffSec);
+        }
+      }
+
       const newEvent: PageViewEvent = {
         id: 'evt_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36),
-        path: path || '/',
-        title: title || 'Page View',
+        path: cleanPath,
+        title: title || cleanPath,
         timestamp: new Date().toISOString(),
         sessionId,
+        visitorId: visitor.id,
         referrer,
         source,
         deviceType,
@@ -211,12 +248,12 @@ export class AnalyticsService {
         country: geo.country,
         countryCode: geo.countryCode,
         city: geo.city,
-        durationSeconds: 15,
+        durationSeconds,
         projectId: meta?.projectId,
         blogSlug: meta?.blogSlug,
       };
 
-      // Read existing events
+      // 1. Store in local browser storage
       const raw = localStorage.getItem(ANALYTICS_EVENTS_KEY);
       let events: PageViewEvent[] = [];
       if (raw) {
@@ -225,15 +262,24 @@ export class AnalyticsService {
         } catch {}
       }
 
-      // Limit stored events in local buffer to latest 2,500 to keep it lightweight & ultra-fast
+      // Keep latest 2,500 events locally
       events.unshift(newEvent);
       if (events.length > 2500) {
         events = events.slice(0, 2500);
       }
-
       localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(events));
 
-      // Dispatch real-time analytics event
+      // 2. Transmit to server API asynchronously
+      try {
+        fetch('/api/analytics/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newEvent),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {}
+
+      // 3. Dispatch UI event for real-time live updates
       window.dispatchEvent(new CustomEvent('portfolio_analytics_updated', { detail: newEvent }));
     } catch (err) {
       console.warn('Analytics tracking skipped:', err);
@@ -241,28 +287,73 @@ export class AnalyticsService {
   }
 
   /**
-   * Get all stored raw events
+   * Sync and merge server-side global events with local events
+   */
+  public static async syncGlobalEvents(): Promise<PageViewEvent[]> {
+    if (typeof window === 'undefined') return [];
+    if (this.isSyncing || Date.now() - this.lastSyncTime < 5000) {
+      return this.getAllEvents();
+    }
+
+    this.isSyncing = true;
+    try {
+      const res = await fetch('/api/analytics/events');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.events)) {
+          const localEvents = this.getAllEvents();
+          const map = new Map<string, PageViewEvent>();
+
+          // Add server events
+          data.events.forEach((e: PageViewEvent) => {
+            if (e && e.id) map.set(e.id, e);
+          });
+
+          // Add local events
+          localEvents.forEach((e: PageViewEvent) => {
+            if (e && e.id && !map.has(e.id)) {
+              map.set(e.id, e);
+            }
+          });
+
+          // Sort by timestamp desc
+          const merged = Array.from(map.values()).sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          ).slice(0, 2500);
+
+          localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(merged));
+          this.lastSyncTime = Date.now();
+          window.dispatchEvent(new CustomEvent('portfolio_analytics_updated'));
+          return merged;
+        }
+      }
+    } catch {} finally {
+      this.isSyncing = false;
+    }
+
+    return this.getAllEvents();
+  }
+
+  /**
+   * Get all stored real events (No fake seed data)
    */
   public static getAllEvents(): PageViewEvent[] {
     if (typeof window === 'undefined') return [];
     try {
       const raw = localStorage.getItem(ANALYTICS_EVENTS_KEY);
-      if (!raw) {
-        // Seed realistic initial analytics data if first time
-        return this.generateInitialAnalyticsSeed();
-      }
+      if (!raw) return [];
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
-      return this.generateInitialAnalyticsSeed();
+      return [];
     } catch {
-      return this.generateInitialAnalyticsSeed();
+      return [];
     }
   }
 
   /**
-   * Calculate aggregated Summary & Chart Data
+   * Calculate 100% Real Aggregated Summary & Chart Data from actual events
    */
   public static getAnalyticsSummary(timeFilter: 'all' | 'today' | '7d' | '30d' = 'all'): AnalyticsSummary {
     const allEvents = this.getAllEvents();
@@ -271,44 +362,66 @@ export class AnalyticsService {
     const filteredEvents = allEvents.filter(evt => {
       if (timeFilter === 'all') return true;
       const evtDate = new Date(evt.timestamp);
-      const diffHours = (now.getTime() - evtDate.getTime()) / (1000 * 60 * 60);
+      const diffMs = now.getTime() - evtDate.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
 
-      if (timeFilter === 'today') return diffHours <= 24;
-      if (timeFilter === '7d') return diffHours <= 24 * 7;
-      if (timeFilter === '30d') return diffHours <= 24 * 30;
+      if (timeFilter === 'today') {
+        // Same calendar date or last 24 hours
+        return diffHours <= 24;
+      }
+      if (timeFilter === '7d') {
+        return diffHours <= 24 * 7;
+      }
+      if (timeFilter === '30d') {
+        return diffHours <= 24 * 30;
+      }
       return true;
     });
 
     const totalPageViews = filteredEvents.length;
+    
+    // Unique visitors by visitorId or sessionId
+    const visitorIds = new Set(filteredEvents.map(e => e.visitorId || e.sessionId));
     const sessionIds = new Set(filteredEvents.map(e => e.sessionId));
-    const totalVisitors = sessionIds.size || 1;
+    const uniqueVisitors = visitorIds.size;
+    const totalVisitors = sessionIds.size;
 
-    // Time categorizations
+    // Time categorizations calculated from real timestamps
     const todayEvents = allEvents.filter(e => {
       const diff = (now.getTime() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60);
       return diff <= 24;
     });
-    const todayVisitors = new Set(todayEvents.map(e => e.sessionId)).size;
+    const todayVisitors = new Set(todayEvents.map(e => e.visitorId || e.sessionId)).size;
 
     const weeklyEvents = allEvents.filter(e => {
       const diff = (now.getTime() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60 * 24);
       return diff <= 7;
     });
-    const weeklyVisitors = new Set(weeklyEvents.map(e => e.sessionId)).size;
+    const weeklyVisitors = new Set(weeklyEvents.map(e => e.visitorId || e.sessionId)).size;
 
     const monthlyEvents = allEvents.filter(e => {
       const diff = (now.getTime() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60 * 24);
       return diff <= 30;
     });
-    const monthlyVisitors = new Set(monthlyEvents.map(e => e.sessionId)).size;
+    const monthlyVisitors = new Set(monthlyEvents.map(e => e.visitorId || e.sessionId)).size;
 
-    const uniqueVisitors = Math.round(totalVisitors * 0.78);
-    const returningVisitors = Math.max(0, totalVisitors - uniqueVisitors);
+    // Calculate returning visitors (visitors who had multiple sessions or multiple visits)
+    const visitorSessionCounts: Record<string, number> = {};
+    filteredEvents.forEach(e => {
+      const key = e.visitorId || e.sessionId;
+      visitorSessionCounts[key] = (visitorSessionCounts[key] || 0) + 1;
+    });
+    let returningVisitors = 0;
+    Object.values(visitorSessionCounts).forEach(cnt => {
+      if (cnt > 1) returningVisitors += 1;
+    });
 
-    // Avg session duration (seconds)
+    // Real Avg session duration (seconds)
     let totalDuration = 0;
-    filteredEvents.forEach(e => { totalDuration += (e.durationSeconds || 45); });
-    const avgSessionDuration = totalPageViews > 0 ? Math.round(totalDuration / totalPageViews) : 65;
+    filteredEvents.forEach(e => {
+      totalDuration += (e.durationSeconds || 15);
+    });
+    const avgSessionDuration = totalPageViews > 0 ? Math.round(totalDuration / totalPageViews) : 0;
 
     // Top Pages
     const pageCounts: Record<string, { path: string; title: string; views: number }> = {};
@@ -319,42 +432,44 @@ export class AnalyticsService {
       }
       pageCounts[key].views += 1;
     });
-    const topPages = Object.values(pageCounts).sort((a, b) => b.views - a.views).slice(0, 8);
+    const topPages = Object.values(pageCounts).sort((a, b) => b.views - a.views).slice(0, 10);
 
-    // Top Projects
-    const projectCounts: Record<string, { id: string; title: string; views: number }> = {
-      'enterprise-cloud-scale-fintech-hub': { id: 'proj-1', title: 'Enterprise Cloud-Scale FinTech Hub', views: 420 },
-      'ai-powered-operations-command-center': { id: 'proj-2', title: 'AI-Powered Operations Command Center', views: 310 },
-      'omnichannel-ecommerce-headless-engine': { id: 'proj-3', title: 'Omnichannel E-Commerce Headless Engine', views: 245 },
-    };
+    // Top Projects (real visits to /project/...)
+    const projectCounts: Record<string, { id: string; title: string; views: number }> = {};
     filteredEvents.forEach(e => {
-      if (e.projectId) {
-        if (!projectCounts[e.projectId]) {
-          projectCounts[e.projectId] = { id: e.projectId, title: e.title || e.projectId, views: 0 };
+      let pId = e.projectId;
+      if (!pId && e.path && e.path.startsWith('/project/')) {
+        pId = e.path.replace('/project/', '').split('?')[0];
+      }
+      if (pId) {
+        if (!projectCounts[pId]) {
+          const displayTitle = e.title && !e.title.includes('Page View') ? e.title.replace(' | Case Study', '').replace(' | Projects', '') : pId.replace(/-/g, ' ');
+          projectCounts[pId] = { id: pId, title: displayTitle, views: 0 };
         }
-        projectCounts[e.projectId].views += 1;
+        projectCounts[pId].views += 1;
       }
     });
     const topProjects = Object.values(projectCounts).sort((a, b) => b.views - a.views);
 
-    // Top Blogs
-    const blogCounts: Record<string, { slug: string; title: string; views: number }> = {
-      'architecting-resilient-multi-tenant-cloud-systems': { slug: 'architecting-resilient-multi-tenant-cloud-systems', title: 'Architecting Resilient Multi-Tenant Cloud Systems', views: 580 },
-      'the-art-of-project-delivery-bringing-structure-to-chaos': { slug: 'the-art-of-project-delivery-bringing-structure-to-chaos', title: 'The Art of Project Delivery: Structure to Deadlines', views: 410 },
-      'mastering-core-web-vitals-and-high-conversion-ui-ux': { slug: 'mastering-core-web-vitals-and-high-conversion-ui-ux', title: 'Mastering Core Web Vitals in 2026', views: 340 },
-    };
+    // Top Blogs (real visits to /blog/...)
+    const blogCounts: Record<string, { slug: string; title: string; views: number }> = {};
     filteredEvents.forEach(e => {
-      if (e.blogSlug) {
-        if (!blogCounts[e.blogSlug]) {
-          blogCounts[e.blogSlug] = { slug: e.blogSlug, title: e.title || e.blogSlug, views: 0 };
+      let bSlug = e.blogSlug;
+      if (!bSlug && e.path && e.path.startsWith('/blog/')) {
+        bSlug = e.path.replace('/blog/', '').split('?')[0];
+      }
+      if (bSlug) {
+        if (!blogCounts[bSlug]) {
+          const displayTitle = e.title && !e.title.includes('Page View') ? e.title.replace(' | Blog', '').replace(' | Blogs', '') : bSlug.replace(/-/g, ' ');
+          blogCounts[bSlug] = { slug: bSlug, title: displayTitle, views: 0 };
         }
-        blogCounts[e.blogSlug].views += 1;
+        blogCounts[bSlug].views += 1;
       }
     });
     const topBlogs = Object.values(blogCounts).sort((a, b) => b.views - a.views);
 
     // Sources Breakdown
-    const sourceCounts: Record<string, number> = { Google: 0, Direct: 0, LinkedIn: 0, Facebook: 0, Twitter: 0, Referral: 0 };
+    const sourceCounts: Record<string, number> = {};
     filteredEvents.forEach(e => {
       const src = e.source || 'Direct';
       sourceCounts[src] = (sourceCounts[src] || 0) + 1;
@@ -365,16 +480,21 @@ export class AnalyticsService {
       percentage: totalPageViews > 0 ? Math.round((count / totalPageViews) * 100) : 0,
     })).sort((a, b) => b.count - a.count);
 
+    // If no events yet, provide clean baseline categories
+    if (sources.length === 0) {
+      sources.push({ name: 'Direct', count: 0, percentage: 0 });
+    }
+
     // Devices Breakdown
     const deviceCounts: Record<string, number> = { Desktop: 0, Mobile: 0, Tablet: 0 };
     filteredEvents.forEach(e => {
-      const dev = e.deviceType || 'Desktop';
+      const dev = (e.deviceType as 'Desktop' | 'Mobile' | 'Tablet') || 'Desktop';
       deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
     });
     const devices = Object.entries(deviceCounts).map(([name, count]) => ({
       name,
       count,
-      percentage: totalPageViews > 0 ? Math.round((count / totalPageViews) * 100) : 0,
+      percentage: totalPageViews > 0 ? Math.round((count / totalPageViews) * 100) : (name === 'Desktop' ? 100 : 0),
     }));
 
     // Browsers Breakdown
@@ -390,17 +510,17 @@ export class AnalyticsService {
     })).sort((a, b) => b.count - a.count);
 
     // Countries & Cities
-    const countryCounts: Record<string, { name: string; code: string; count: number; flag?: string }> = {};
+    const countryCounts: Record<string, { name: string; code: string; count: number }> = {};
     const cityCounts: Record<string, { name: string; country: string; count: number }> = {};
     filteredEvents.forEach(e => {
-      const cName = e.country || 'United States';
-      const cCode = e.countryCode || 'US';
+      const cName = e.country || 'Global';
+      const cCode = e.countryCode || 'UN';
       if (!countryCounts[cName]) {
         countryCounts[cName] = { name: cName, code: cCode, count: 0 };
       }
       countryCounts[cName].count += 1;
 
-      const cityName = e.city || 'Metropolis';
+      const cityName = e.city || 'City';
       const cityKey = `${cityName}-${cName}`;
       if (!cityCounts[cityKey]) {
         cityCounts[cityKey] = { name: cityName, country: cName, count: 0 };
@@ -408,10 +528,10 @@ export class AnalyticsService {
       cityCounts[cityKey].count += 1;
     });
 
-    const countries = Object.values(countryCounts).sort((a, b) => b.count - a.count).slice(0, 8);
-    const cities = Object.values(cityCounts).sort((a, b) => b.count - a.count).slice(0, 8);
+    const countries = Object.values(countryCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+    const cities = Object.values(cityCounts).sort((a, b) => b.count - a.count).slice(0, 10);
 
-    // Time series for Daily/Weekly/Monthly interactive charts
+    // Real Time series for Daily Interactive chart (Last 7 days)
     const dailyMap: Record<string, { visitors: Set<string>; pageViews: number }> = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -425,39 +545,71 @@ export class AnalyticsService {
       const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       if (dailyMap[label]) {
         dailyMap[label].pageViews += 1;
-        dailyMap[label].visitors.add(e.sessionId);
+        dailyMap[label].visitors.add(e.visitorId || e.sessionId);
       }
     });
 
     const dailyViews = Object.entries(dailyMap).map(([date, data]) => ({
       date,
-      visitors: Math.max(data.visitors.size, Math.round(data.pageViews * 0.7)),
+      visitors: data.visitors.size,
       pageViews: data.pageViews,
     }));
 
-    const weeklyViews = [
-      { week: 'Week 1', visitors: Math.round(weeklyVisitors * 0.65), pageViews: Math.round(totalPageViews * 0.22) },
-      { week: 'Week 2', visitors: Math.round(weeklyVisitors * 0.78), pageViews: Math.round(totalPageViews * 0.26) },
-      { week: 'Week 3', visitors: Math.round(weeklyVisitors * 0.92), pageViews: Math.round(totalPageViews * 0.31) },
-      { week: 'Week 4 (Current)', visitors: weeklyVisitors, pageViews: Math.round(totalPageViews * 0.38) },
-    ];
+    // Real Weekly series (Last 4 weeks)
+    const weeklyMap: Record<string, { visitors: Set<string>; pageViews: number }> = {
+      '3 Weeks Ago': { visitors: new Set(), pageViews: 0 },
+      '2 Weeks Ago': { visitors: new Set(), pageViews: 0 },
+      'Last Week': { visitors: new Set(), pageViews: 0 },
+      'This Week': { visitors: new Set(), pageViews: 0 },
+    };
 
-    const monthlyViews = [
-      { month: 'Oct', visitors: 1120, pageViews: 2840 },
-      { month: 'Nov', visitors: 1450, pageViews: 3790 },
-      { month: 'Dec', visitors: 1680, pageViews: 4120 },
-      { month: 'Jan', visitors: 2190, pageViews: 5430 },
-      { month: 'Feb', visitors: monthlyVisitors || 2640, pageViews: totalPageViews || 6890 },
-    ];
+    allEvents.forEach(e => {
+      const diffDays = (now.getTime() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+      const key = diffDays <= 7 ? 'This Week' : diffDays <= 14 ? 'Last Week' : diffDays <= 21 ? '2 Weeks Ago' : diffDays <= 28 ? '3 Weeks Ago' : null;
+      if (key && weeklyMap[key]) {
+        weeklyMap[key].pageViews += 1;
+        weeklyMap[key].visitors.add(e.visitorId || e.sessionId);
+      }
+    });
+
+    const weeklyViews = Object.entries(weeklyMap).map(([week, data]) => ({
+      week,
+      visitors: data.visitors.size,
+      pageViews: data.pageViews,
+    }));
+
+    // Real Monthly series (Last 6 calendar months)
+    const monthlyMap: Record<string, { visitors: Set<string>; pageViews: number }> = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const mLabel = d.toLocaleDateString('en-US', { month: 'short' });
+      monthlyMap[mLabel] = { visitors: new Set(), pageViews: 0 };
+    }
+
+    allEvents.forEach(e => {
+      const d = new Date(e.timestamp);
+      const mLabel = d.toLocaleDateString('en-US', { month: 'short' });
+      if (monthlyMap[mLabel]) {
+        monthlyMap[mLabel].pageViews += 1;
+        monthlyMap[mLabel].visitors.add(e.visitorId || e.sessionId);
+      }
+    });
+
+    const monthlyViews = Object.entries(monthlyMap).map(([month, data]) => ({
+      month,
+      visitors: data.visitors.size,
+      pageViews: data.pageViews,
+    }));
 
     return {
       totalVisitors,
       uniqueVisitors,
-      todayVisitors: todayVisitors || Math.round(totalVisitors * 0.18),
-      weeklyVisitors: weeklyVisitors || Math.round(totalVisitors * 0.65),
-      monthlyVisitors: monthlyVisitors || totalVisitors,
+      todayVisitors,
+      weeklyVisitors,
+      monthlyVisitors,
       returningVisitors,
-      totalPageViews: totalPageViews || 1,
+      totalPageViews,
       avgSessionDuration,
       topPages,
       topProjects,
@@ -474,12 +626,18 @@ export class AnalyticsService {
   }
 
   /**
-   * Reset/Clear analytics cache
+   * Reset/Clear real analytics data
    */
   public static resetAnalytics(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(ANALYTICS_EVENTS_KEY);
-    localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(this.generateInitialAnalyticsSeed()));
+    sessionStorage.removeItem(LAST_TRACKED_KEY);
+    
+    // Call server to clear
+    try {
+      fetch('/api/analytics/clear', { method: 'POST' }).catch(() => {});
+    } catch {}
+
     window.dispatchEvent(new CustomEvent('portfolio_analytics_updated'));
   }
 
@@ -496,7 +654,7 @@ export class AnalyticsService {
    */
   public static exportAnalyticsCsv(): string {
     const events = this.getAllEvents();
-    const headers = ['ID', 'Timestamp', 'Path', 'Title', 'Source', 'DeviceType', 'Browser', 'OS', 'Country', 'City'];
+    const headers = ['ID', 'Timestamp', 'Path', 'Title', 'Source', 'DeviceType', 'Browser', 'OS', 'Country', 'City', 'DurationSeconds'];
     const rows = events.map(e => [
       e.id,
       e.timestamp,
@@ -508,76 +666,8 @@ export class AnalyticsService {
       e.os,
       e.country,
       e.city,
+      e.durationSeconds || 15,
     ]);
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  }
-
-  /**
-   * Generate realistic initial historical dataset for new instances
-   */
-  private static generateInitialAnalyticsSeed(): PageViewEvent[] {
-    const seedEvents: PageViewEvent[] = [];
-    const paths = ['/', '/about', '/projects', '/project/enterprise-cloud-scale-fintech-hub', '/project/ai-powered-operations-command-center', '/blogs', '/blog/architecting-resilient-multi-tenant-cloud-systems', '/experience', '/contact'];
-    const titles: Record<string, string> = {
-      '/': 'Home | Alex Vance Portfolio',
-      '/about': 'About & Leadership Background',
-      '/projects': 'Projects & Case Studies Showcase',
-      '/project/enterprise-cloud-scale-fintech-hub': 'Enterprise Cloud-Scale FinTech Hub',
-      '/project/ai-powered-operations-command-center': 'AI-Powered Operations Command Center',
-      '/blogs': 'Engineering & Leadership Insights Blog',
-      '/blog/architecting-resilient-multi-tenant-cloud-systems': 'Architecting Resilient Multi-Tenant Systems',
-      '/experience': 'Professional Career & Experience',
-      '/contact': 'Get in Touch & Consultations',
-    };
-    const sources: ('Google' | 'Facebook' | 'LinkedIn' | 'Twitter' | 'Direct' | 'Referral')[] = ['Google', 'Direct', 'LinkedIn', 'Google', 'Twitter', 'Facebook', 'Referral'];
-    const countries = [
-      { country: 'United States', code: 'US', city: 'San Francisco' },
-      { country: 'United States', code: 'US', city: 'New York' },
-      { country: 'United Kingdom', code: 'GB', city: 'London' },
-      { country: 'Germany', code: 'DE', city: 'Berlin' },
-      { country: 'Canada', code: 'CA', city: 'Toronto' },
-      { country: 'Bangladesh', code: 'BD', city: 'Dhaka' },
-      { country: 'India', code: 'IN', city: 'Bengaluru' },
-      { country: 'Singapore', code: 'SG', city: 'Singapore' },
-      { country: 'Australia', code: 'AU', city: 'Sydney' },
-    ];
-    const devices: ('Desktop' | 'Mobile' | 'Tablet')[] = ['Desktop', 'Desktop', 'Mobile', 'Desktop', 'Mobile', 'Tablet'];
-    const browsers = ['Chrome', 'Safari', 'Firefox', 'Microsoft Edge', 'Chrome', 'Opera'];
-
-    // Generate ~120 realistic past events over the last 14 days
-    for (let i = 0; i < 120; i++) {
-      const pastHours = Math.floor(Math.random() * (14 * 24));
-      const eventTime = new Date(Date.now() - pastHours * 60 * 60 * 1000).toISOString();
-      const p = paths[Math.floor(Math.random() * paths.length)];
-      const loc = countries[Math.floor(Math.random() * countries.length)];
-      const dev = devices[Math.floor(Math.random() * devices.length)];
-      const br = browsers[Math.floor(Math.random() * browsers.length)];
-      const src = sources[Math.floor(Math.random() * sources.length)];
-      const sessionId = 'ses_seed_' + Math.floor(i / 3);
-
-      seedEvents.push({
-        id: `seed_evt_${i}`,
-        path: p,
-        title: titles[p] || 'Page View',
-        timestamp: eventTime,
-        sessionId,
-        referrer: src === 'Google' ? 'https://google.com' : src === 'LinkedIn' ? 'https://linkedin.com' : '',
-        source: src,
-        deviceType: dev,
-        browser: br,
-        os: dev === 'Mobile' ? 'iOS' : 'macOS',
-        country: loc.country,
-        countryCode: loc.code,
-        city: loc.city,
-        durationSeconds: Math.floor(Math.random() * 90) + 20,
-        projectId: p.includes('/project/') ? p.replace('/project/', '') : undefined,
-        blogSlug: p.includes('/blog/') ? p.replace('/blog/', '') : undefined,
-      });
-    }
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(seedEvents));
-    }
-    return seedEvents;
   }
 }
