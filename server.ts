@@ -264,10 +264,10 @@ app.post('/api/analytics/track', async (req, res) => {
       serverAnalyticsBuffer.pop();
     }
 
-    // Optionally sync to Supabase visitor_analytics table
+    // Optionally sync to Supabase visitor_analytics table or portfolio_configs id: 2
     if (supabase) {
       try {
-        await supabase.from('visitor_analytics').insert({
+        const { error: tableErr } = await supabase.from('visitor_analytics').insert({
           id: event.id,
           path: event.path,
           title: event.title,
@@ -286,6 +286,27 @@ app.post('/api/analytics/track', async (req, res) => {
           blog_slug: event.blogSlug || null,
           created_at: event.timestamp,
         });
+
+        // Also sync to portfolio_configs id: 2 as unified multi-platform cloud store
+        try {
+          const { data: configData } = await supabase
+            .from('portfolio_configs')
+            .select('content')
+            .eq('id', 2)
+            .single();
+
+          let remoteEvents: any[] = [];
+          if (configData && configData.content && Array.isArray(configData.content.events)) {
+            remoteEvents = configData.content.events;
+          }
+          remoteEvents.unshift(event);
+          if (remoteEvents.length > 5000) {
+            remoteEvents = remoteEvents.slice(0, 5000);
+          }
+          await supabase
+            .from('portfolio_configs')
+            .upsert({ id: 2, content: { events: remoteEvents, updatedAt: new Date().toISOString() } });
+        } catch {}
       } catch (dbErr) {
         // Table may not exist yet in user's Supabase project, fallback cleanly to memory buffer
       }
@@ -301,6 +322,7 @@ app.post('/api/analytics/track', async (req, res) => {
 app.get('/api/analytics/events', async (req, res) => {
   try {
     if (supabase) {
+      // Try dedicated table first
       try {
         const { data, error } = await supabase
           .from('visitor_analytics')
@@ -328,11 +350,22 @@ app.get('/api/analytics/events', async (req, res) => {
             projectId: d.project_id,
             blogSlug: d.blog_slug,
           }));
-          return res.json({ success: true, events: formatted, source: 'supabase' });
+          return res.json({ success: true, events: formatted, source: 'supabase_table' });
         }
-      } catch (dbErr) {
-        // Fallback to server buffer
-      }
+      } catch {}
+
+      // Try portfolio_configs id: 2
+      try {
+        const { data: configData } = await supabase
+          .from('portfolio_configs')
+          .select('content')
+          .eq('id', 2)
+          .single();
+
+        if (configData && configData.content && Array.isArray(configData.content.events) && configData.content.events.length > 0) {
+          return res.json({ success: true, events: configData.content.events, source: 'supabase_config' });
+        }
+      } catch {}
     }
 
     res.json({ success: true, events: serverAnalyticsBuffer, source: 'server_memory' });

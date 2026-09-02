@@ -1,8 +1,10 @@
 /**
  * Visitor Analytics Engine & Tracking Service
  * 100% Real-Time Live Telemetry: Tracks Real Page Views, Unique Visitors, Traffic Sources, Geolocation & Devices
+ * Supports Dual-Engine Sync: Direct Supabase Cloud Database + Server-side In-Memory Engine + Local Cache
  */
 
+import { createClient } from '@supabase/supabase-js';
 import { PageViewEvent, AnalyticsSummary } from '../types/portfolio';
 
 const ANALYTICS_EVENTS_KEY = 'DYNAMIC_PORTFOLIO_REAL_ANALYTICS_EVENTS_V2';
@@ -12,10 +14,26 @@ const SESSION_START_KEY = 'DYNAMIC_PORTFOLIO_REAL_SESSION_START_V2';
 const GEO_CACHE_KEY = 'DYNAMIC_PORTFOLIO_REAL_GEO_CACHE_V2';
 const LAST_TRACKED_KEY = 'DYNAMIC_PORTFOLIO_REAL_LAST_TRACKED_V2';
 
+// Initialize Client-side Supabase connection if keys exist
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+
+const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
 export class AnalyticsService {
   private static visitorGeo: { country: string; countryCode: string; city: string } | null = null;
   private static isSyncing = false;
   private static lastSyncTime = 0;
+  private static cloudConnected = false;
+
+  /**
+   * Check if Supabase Cloud is configured and active
+   */
+  public static isCloudConfigured(): boolean {
+    return !!(supabaseUrl && supabaseAnonKey && supabase);
+  }
 
   /**
    * Helper to detect Device Type
@@ -153,7 +171,7 @@ export class AnalyticsService {
         }
       }
     } catch {
-      // Ignore network errors, fall back to timezone estimation
+      // Fallback below
     }
 
     // Timezone based fallback
@@ -188,6 +206,68 @@ export class AnalyticsService {
   }
 
   /**
+   * Save event directly to Supabase cloud
+   */
+  private static async persistToSupabase(event: PageViewEvent): Promise<void> {
+    if (!supabase) return;
+
+    // 1. Try writing directly to dedicated visitor_analytics table
+    let savedToTable = false;
+    try {
+      const { error } = await supabase.from('visitor_analytics').insert({
+        id: event.id,
+        path: event.path,
+        title: event.title,
+        session_id: event.sessionId,
+        visitor_id: event.visitorId || null,
+        referrer: event.referrer,
+        source: event.source,
+        device_type: event.deviceType,
+        browser: event.browser,
+        os: event.os,
+        country: event.country,
+        country_code: event.countryCode,
+        city: event.city,
+        duration_seconds: event.durationSeconds,
+        project_id: event.projectId || null,
+        blog_slug: event.blogSlug || null,
+        created_at: event.timestamp,
+      });
+
+      if (!error) {
+        savedToTable = true;
+        this.cloudConnected = true;
+      }
+    } catch {}
+
+    // 2. Also write/append to portfolio_configs row (id: 2) as guaranteed fallback
+    try {
+      const { data } = await supabase
+        .from('portfolio_configs')
+        .select('content')
+        .eq('id', 2)
+        .single();
+
+      let remoteEvents: PageViewEvent[] = [];
+      if (data && data.content && Array.isArray(data.content.events)) {
+        remoteEvents = data.content.events;
+      }
+
+      // Prepend and trim to 5000 max events
+      remoteEvents.unshift(event);
+      if (remoteEvents.length > 5000) {
+        remoteEvents = remoteEvents.slice(0, 5000);
+      }
+
+      await supabase
+        .from('portfolio_configs')
+        .upsert({ id: 2, content: { events: remoteEvents, updatedAt: new Date().toISOString() } });
+
+      this.cloudConnected = true;
+    } catch {}
+  }
+
+  /**
    * Track a Real Page View event
    */
   public static async trackPageView(
@@ -200,13 +280,13 @@ export class AnalyticsService {
     try {
       const cleanPath = path || window.location.pathname || '/';
       
-      // Debounce rapid duplicate tracking (within 1.5 seconds on same path)
+      // Debounce rapid duplicate tracking (within 1 second on same path)
       const lastTrackStr = sessionStorage.getItem(LAST_TRACKED_KEY);
       const now = Date.now();
       if (lastTrackStr) {
         try {
           const last = JSON.parse(lastTrackStr);
-          if (last.path === cleanPath && now - last.time < 1500) {
+          if (last.path === cleanPath && now - last.time < 1000) {
             return;
           }
         } catch {}
@@ -269,7 +349,10 @@ export class AnalyticsService {
       }
       localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(events));
 
-      // 2. Transmit to server API asynchronously
+      // 2. Transmit directly to Supabase Cloud Database (Works anywhere, including Vercel / Netlify)
+      this.persistToSupabase(newEvent).catch(() => {});
+
+      // 3. Transmit to server API asynchronously (if running on Node / Express full-stack)
       try {
         fetch('/api/analytics/track', {
           method: 'POST',
@@ -279,7 +362,7 @@ export class AnalyticsService {
         }).catch(() => {});
       } catch {}
 
-      // 3. Dispatch UI event for real-time live updates
+      // 4. Dispatch UI event for real-time live updates
       window.dispatchEvent(new CustomEvent('portfolio_analytics_updated', { detail: newEvent }));
     } catch (err) {
       console.warn('Analytics tracking skipped:', err);
@@ -287,47 +370,108 @@ export class AnalyticsService {
   }
 
   /**
-   * Sync and merge server-side global events with local events
+   * Sync and merge server-side and Supabase global events with local events
    */
   public static async syncGlobalEvents(): Promise<PageViewEvent[]> {
     if (typeof window === 'undefined') return [];
-    if (this.isSyncing || Date.now() - this.lastSyncTime < 5000) {
+    if (this.isSyncing || Date.now() - this.lastSyncTime < 2500) {
       return this.getAllEvents();
     }
 
     this.isSyncing = true;
     try {
-      const res = await fetch('/api/analytics/events');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.events)) {
-          const localEvents = this.getAllEvents();
-          const map = new Map<string, PageViewEvent>();
+      const localEvents = this.getAllEvents();
+      const map = new Map<string, PageViewEvent>();
 
-          // Add server events
-          data.events.forEach((e: PageViewEvent) => {
-            if (e && e.id) map.set(e.id, e);
-          });
+      // Populate local events
+      localEvents.forEach((e: PageViewEvent) => {
+        if (e && e.id) map.set(e.id, e);
+      });
 
-          // Add local events
-          localEvents.forEach((e: PageViewEvent) => {
-            if (e && e.id && !map.has(e.id)) {
-              map.set(e.id, e);
-            }
-          });
+      // 1. Fetch from Supabase (Central Cloud Store)
+      if (supabase) {
+        // A. Try dedicated table
+        try {
+          const { data: tableData, error: tableErr } = await supabase
+            .from('visitor_analytics')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1000);
 
-          // Sort by timestamp desc
-          const merged = Array.from(map.values()).sort(
-            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          ).slice(0, 2500);
+          if (!tableErr && Array.isArray(tableData) && tableData.length > 0) {
+            tableData.forEach((d: any) => {
+              if (d && d.id) {
+                map.set(d.id, {
+                  id: d.id,
+                  path: d.path,
+                  title: d.title,
+                  timestamp: d.created_at || d.timestamp,
+                  sessionId: d.session_id || d.sessionId || 'ses_anon',
+                  visitorId: d.visitor_id || d.visitorId,
+                  referrer: d.referrer || '',
+                  source: d.source || 'Direct',
+                  deviceType: d.device_type || d.deviceType || 'Desktop',
+                  browser: d.browser || 'Chrome',
+                  os: d.os || 'Unknown',
+                  country: d.country || 'Global',
+                  countryCode: d.country_code || d.countryCode || 'UN',
+                  city: d.city || 'City',
+                  durationSeconds: d.duration_seconds || d.durationSeconds || 15,
+                  projectId: d.project_id || d.projectId,
+                  blogSlug: d.blog_slug || d.blogSlug,
+                });
+              }
+            });
+            this.cloudConnected = true;
+          }
+        } catch {}
 
-          localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(merged));
-          this.lastSyncTime = Date.now();
-          window.dispatchEvent(new CustomEvent('portfolio_analytics_updated'));
-          return merged;
-        }
+        // B. Try portfolio_configs id: 2 row
+        try {
+          const { data: configData } = await supabase
+            .from('portfolio_configs')
+            .select('content')
+            .eq('id', 2)
+            .single();
+
+          if (configData && configData.content && Array.isArray(configData.content.events)) {
+            configData.content.events.forEach((e: PageViewEvent) => {
+              if (e && e.id && !map.has(e.id)) {
+                map.set(e.id, e);
+              }
+            });
+            this.cloudConnected = true;
+          }
+        } catch {}
       }
-    } catch {} finally {
+
+      // 2. Fetch from Express / Node Server API (if running full-stack)
+      try {
+        const res = await fetch('/api/analytics/events');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.events)) {
+            data.events.forEach((e: PageViewEvent) => {
+              if (e && e.id && !map.has(e.id)) {
+                map.set(e.id, e);
+              }
+            });
+          }
+        }
+      } catch {}
+
+      // Sort by timestamp desc and store up to 3000 events
+      const merged = Array.from(map.values()).sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ).slice(0, 3000);
+
+      localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(merged));
+      this.lastSyncTime = Date.now();
+      window.dispatchEvent(new CustomEvent('portfolio_analytics_updated'));
+      return merged;
+    } catch (err) {
+      console.warn('Analytics sync error:', err);
+    } finally {
       this.isSyncing = false;
     }
 
@@ -628,11 +772,21 @@ export class AnalyticsService {
   /**
    * Reset/Clear real analytics data
    */
-  public static resetAnalytics(): void {
+  public static async resetAnalytics(): Promise<void> {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(ANALYTICS_EVENTS_KEY);
     sessionStorage.removeItem(LAST_TRACKED_KEY);
     
+    // Clear Supabase
+    if (supabase) {
+      try {
+        await supabase.from('visitor_analytics').delete().neq('id', '0');
+      } catch {}
+      try {
+        await supabase.from('portfolio_configs').upsert({ id: 2, content: { events: [], updatedAt: new Date().toISOString() } });
+      } catch {}
+    }
+
     // Call server to clear
     try {
       fetch('/api/analytics/clear', { method: 'POST' }).catch(() => {});

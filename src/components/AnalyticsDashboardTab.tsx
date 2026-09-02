@@ -81,8 +81,29 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
     };
 
     window.addEventListener('portfolio_analytics_updated', handleUpdate);
-    return () => window.removeEventListener('portfolio_analytics_updated', handleUpdate);
+
+    // Auto-poll every 6 seconds for live global visits from other devices/browsers
+    const intervalId = setInterval(() => {
+      AnalyticsService.syncGlobalEvents().then(() => {
+        loadData();
+      });
+    }, 6000);
+
+    return () => {
+      window.removeEventListener('portfolio_analytics_updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, [timeFilter]);
+
+  // Trigger a test visit to verify tracking instantly
+  const handleSimulateTestVisit = async () => {
+    const testPaths = ['/', '/projects', '/contact', '/experience', '/blog'];
+    const randomPath = testPaths[Math.floor(Math.random() * testPaths.length)];
+    await AnalyticsService.trackPageView(randomPath, `Live Test View: ${randomPath}`);
+    await AnalyticsService.syncGlobalEvents();
+    loadData();
+    showNotice(`✅ টেস্ট ভিজিটর সফলভাবে রেকর্ড হয়েছে (${randomPath})! চার্ট ও কাউন্টার আপডেট হয়েছে।`);
+  };
 
   const handleExportJson = () => {
     const jsonStr = AnalyticsService.exportAnalyticsJson();
@@ -190,6 +211,17 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ da
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-indigo-400' : ''}`} />
             <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync'}</span>
+          </button>
+
+          {/* Test Real Visit Button */}
+          <button
+            type="button"
+            onClick={handleSimulateTestVisit}
+            title="Trigger a live visit event to test tracking instantly"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="whitespace-nowrap">টেস্ট ভিজিট যোগ করুন</span>
           </button>
 
           {/* Action buttons */}
