@@ -6,5 +6,5 @@ Disallow: /_next/
 Disallow: /dist/
 
 # Host & Sitemap location for Google Search Console
-Host: https://alexvance.dev
-Sitemap: https://alexvance.dev/sitemap.xml
+Host: https://mdefath.vercel.app
+Sitemap: https://mdefath.vercel.app/sitemap.xml
