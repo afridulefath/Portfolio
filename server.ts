@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
@@ -224,8 +225,30 @@ interface ServerAnalyticsEvent {
   clientIp?: string;
 }
 
-const serverAnalyticsBuffer: ServerAnalyticsEvent[] = [];
+const ANALYTICS_DATA_FILE = path.join(process.cwd(), 'data_analytics_events.json');
+let serverAnalyticsBuffer: ServerAnalyticsEvent[] = [];
 const MAX_SERVER_ANALYTICS = 5000;
+
+// Load persisted events from disk on startup
+try {
+  if (fs.existsSync(ANALYTICS_DATA_FILE)) {
+    const raw = fs.readFileSync(ANALYTICS_DATA_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      serverAnalyticsBuffer = parsed.slice(0, MAX_SERVER_ANALYTICS);
+    }
+  }
+} catch (err) {
+  console.warn('Could not read analytics file on startup:', err);
+}
+
+function saveAnalyticsToDisk() {
+  try {
+    fs.writeFileSync(ANALYTICS_DATA_FILE, JSON.stringify(serverAnalyticsBuffer.slice(0, MAX_SERVER_ANALYTICS)), 'utf-8');
+  } catch (err) {
+    console.warn('Could not save analytics to disk:', err);
+  }
+}
 
 // 1. Ingest Page View Event
 app.post('/api/analytics/track', async (req, res) => {
@@ -258,10 +281,14 @@ app.post('/api/analytics/track', async (req, res) => {
       clientIp: clientIp.replace('::ffff:', ''),
     };
 
-    // Store in circular in-memory buffer
-    serverAnalyticsBuffer.unshift(event);
-    if (serverAnalyticsBuffer.length > MAX_SERVER_ANALYTICS) {
-      serverAnalyticsBuffer.pop();
+    // Store in circular in-memory buffer and persist to disk
+    const existingIdx = serverAnalyticsBuffer.findIndex(e => e.id === event.id);
+    if (existingIdx === -1) {
+      serverAnalyticsBuffer.unshift(event);
+      if (serverAnalyticsBuffer.length > MAX_SERVER_ANALYTICS) {
+        serverAnalyticsBuffer.pop();
+      }
+      saveAnalyticsToDisk();
     }
 
     // Optionally sync to Supabase visitor_analytics table or portfolio_configs id: 2
@@ -374,10 +401,59 @@ app.get('/api/analytics/events', async (req, res) => {
   }
 });
 
-// 3. Clear Analytics Buffer
+// 3. Bulk Sync Analytics Events from Client/Local
+app.post('/api/analytics/bulk-sync', async (req, res) => {
+  try {
+    const { events } = req.body || {};
+    if (Array.isArray(events) && events.length > 0) {
+      let addedCount = 0;
+      const existingIds = new Set(serverAnalyticsBuffer.map(e => e.id));
+      events.forEach((evt: any) => {
+        if (evt && evt.id && !existingIds.has(evt.id)) {
+          serverAnalyticsBuffer.push({
+            id: evt.id,
+            path: String(evt.path || '/').substring(0, 300),
+            title: String(evt.title || 'Page View').substring(0, 200),
+            timestamp: evt.timestamp || new Date().toISOString(),
+            sessionId: String(evt.sessionId || 'ses_anon').substring(0, 100),
+            visitorId: evt.visitorId ? String(evt.visitorId).substring(0, 100) : undefined,
+            referrer: String(evt.referrer || '').substring(0, 500),
+            source: String(evt.source || 'Direct').substring(0, 50),
+            deviceType: String(evt.deviceType || 'Desktop').substring(0, 50),
+            browser: String(evt.browser || 'Chrome').substring(0, 50),
+            os: String(evt.os || 'Windows').substring(0, 50),
+            country: String(evt.country || 'Global').substring(0, 100),
+            countryCode: String(evt.countryCode || 'UN').substring(0, 10),
+            city: String(evt.city || 'City').substring(0, 100),
+            durationSeconds: Number(evt.durationSeconds) || 15,
+            projectId: evt.projectId ? String(evt.projectId).substring(0, 100) : undefined,
+            blogSlug: evt.blogSlug ? String(evt.blogSlug).substring(0, 100) : undefined,
+          });
+          existingIds.add(evt.id);
+          addedCount++;
+        }
+      });
+
+      if (addedCount > 0) {
+        // Sort descending
+        serverAnalyticsBuffer.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        if (serverAnalyticsBuffer.length > MAX_SERVER_ANALYTICS) {
+          serverAnalyticsBuffer = serverAnalyticsBuffer.slice(0, MAX_SERVER_ANALYTICS);
+        }
+        saveAnalyticsToDisk();
+      }
+    }
+    res.json({ success: true, count: serverAnalyticsBuffer.length });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Clear Analytics Buffer
 app.post('/api/analytics/clear', async (req, res) => {
   try {
     serverAnalyticsBuffer.length = 0;
+    saveAnalyticsToDisk();
     if (supabase) {
       try {
         await supabase.from('visitor_analytics').delete().neq('id', '0');

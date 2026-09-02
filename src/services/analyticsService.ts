@@ -131,16 +131,15 @@ export class AnalyticsService {
   }
 
   /**
-   * Asynchronously fetch real visitor geolocation
+   * Fast synchronous fallback geo based on timezone and locale
    */
-  public static async fetchGeoLocation(): Promise<{ country: string; countryCode: string; city: string }> {
+  public static getInstantGeo(): { country: string; countryCode: string; city: string } {
     if (this.visitorGeo) return this.visitorGeo;
     if (typeof window === 'undefined') {
       return { country: 'Global', countryCode: 'UN', city: 'City' };
     }
 
     try {
-      // Check cached geo in localStorage (valid for 24 hours)
       const cached = localStorage.getItem(GEO_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -149,35 +148,11 @@ export class AnalyticsService {
           return parsed.geo;
         }
       }
+    } catch {}
 
-      // Fast lookup via ipwho.is with 2.5s timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-      
-      const res = await fetch('https://ipwho.is/', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          const geo = {
-            country: data.country || 'Global',
-            countryCode: data.country_code || 'UN',
-            city: data.city || 'City',
-          };
-          this.visitorGeo = geo;
-          localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), geo }));
-          return geo;
-        }
-      }
-    } catch {
-      // Fallback below
-    }
-
-    // Timezone based fallback
     let fallback = { country: 'Global', countryCode: 'UN', city: 'City' };
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
       if (tz.includes('Dhaka') || tz.includes('Asia/Dhaka')) {
         fallback = { country: 'Bangladesh', countryCode: 'BD', city: 'Dhaka' };
       } else if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('Asia/Kolkata')) {
@@ -203,6 +178,41 @@ export class AnalyticsService {
 
     this.visitorGeo = fallback;
     return fallback;
+  }
+
+  /**
+   * Asynchronously fetch real visitor geolocation
+   */
+  public static async fetchGeoLocation(): Promise<{ country: string; countryCode: string; city: string }> {
+    if (this.visitorGeo && this.visitorGeo.country !== 'Global') return this.visitorGeo;
+    if (typeof window === 'undefined') {
+      return { country: 'Global', countryCode: 'UN', city: 'City' };
+    }
+
+    try {
+      // Fast lookup via ipwho.is with 2.5s timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      
+      const res = await fetch('https://ipwho.is/', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          const geo = {
+            country: data.country || 'Global',
+            countryCode: data.country_code || 'UN',
+            city: data.city || 'City',
+          };
+          this.visitorGeo = geo;
+          localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), geo }));
+          return geo;
+        }
+      }
+    } catch {}
+
+    return this.getInstantGeo();
   }
 
   /**
@@ -268,13 +278,13 @@ export class AnalyticsService {
   }
 
   /**
-   * Track a Real Page View event
+   * Track a Real Page View event (Instant synchronous local storage + background async sync)
    */
-  public static async trackPageView(
+  public static trackPageView(
     path: string,
     title: string = (typeof document !== 'undefined' ? document.title : 'Page View'),
     meta?: { projectId?: string; blogSlug?: string }
-  ): Promise<void> {
+  ): void {
     if (typeof window === 'undefined') return;
 
     try {
@@ -301,7 +311,8 @@ export class AnalyticsService {
       const browser = this.detectBrowser();
       const os = this.detectOS();
       
-      const geo = await this.fetchGeoLocation();
+      // Instant Synchronous Geo (Zero latency)
+      const geo = this.getInstantGeo();
 
       // Estimate session duration
       let durationSeconds = 15;
@@ -333,7 +344,7 @@ export class AnalyticsService {
         blogSlug: meta?.blogSlug,
       };
 
-      // 1. Store in local browser storage
+      // 1. Store in local browser storage IMMEDIATELY
       const raw = localStorage.getItem(ANALYTICS_EVENTS_KEY);
       let events: PageViewEvent[] = [];
       if (raw) {
@@ -349,10 +360,13 @@ export class AnalyticsService {
       }
       localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(events));
 
-      // 2. Transmit directly to Supabase Cloud Database (Works anywhere, including Vercel / Netlify)
+      // 2. Dispatch UI event for real-time live updates immediately
+      window.dispatchEvent(new CustomEvent('portfolio_analytics_updated', { detail: newEvent }));
+
+      // 3. Transmit directly to Supabase Cloud Database in background
       this.persistToSupabase(newEvent).catch(() => {});
 
-      // 3. Transmit to server API asynchronously (if running on Node / Express full-stack)
+      // 4. Transmit to server API in background
       try {
         fetch('/api/analytics/track', {
           method: 'POST',
@@ -362,8 +376,28 @@ export class AnalyticsService {
         }).catch(() => {});
       } catch {}
 
-      // 4. Dispatch UI event for real-time live updates
-      window.dispatchEvent(new CustomEvent('portfolio_analytics_updated', { detail: newEvent }));
+      // 5. Asynchronously refine IP geo if necessary
+      this.fetchGeoLocation().then(refined => {
+        if (refined && refined.country !== geo.country) {
+          newEvent.country = refined.country;
+          newEvent.countryCode = refined.countryCode;
+          newEvent.city = refined.city;
+          // Update in local storage
+          try {
+            const currentRaw = localStorage.getItem(ANALYTICS_EVENTS_KEY);
+            if (currentRaw) {
+              const currentEvents: PageViewEvent[] = JSON.parse(currentRaw);
+              const idx = currentEvents.findIndex(e => e.id === newEvent.id);
+              if (idx !== -1) {
+                currentEvents[idx] = newEvent;
+                localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(currentEvents));
+                window.dispatchEvent(new CustomEvent('portfolio_analytics_updated', { detail: newEvent }));
+              }
+            }
+          } catch {}
+        }
+      }).catch(() => {});
+
     } catch (err) {
       console.warn('Analytics tracking skipped:', err);
     }
@@ -383,7 +417,7 @@ export class AnalyticsService {
       const localEvents = this.getAllEvents();
       const map = new Map<string, PageViewEvent>();
 
-      // Populate local events
+      // Populate local events first
       localEvents.forEach((e: PageViewEvent) => {
         if (e && e.id) map.set(e.id, e);
       });
@@ -465,7 +499,19 @@ export class AnalyticsService {
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       ).slice(0, 3000);
 
-      localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(merged));
+      if (merged.length > 0) {
+        localStorage.setItem(ANALYTICS_EVENTS_KEY, JSON.stringify(merged));
+
+        // Push combined events to server in background so server never loses local events
+        try {
+          fetch('/api/analytics/bulk-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ events: merged.slice(0, 500) }),
+          }).catch(() => {});
+        } catch {}
+      }
+
       this.lastSyncTime = Date.now();
       window.dispatchEvent(new CustomEvent('portfolio_analytics_updated'));
       return merged;
